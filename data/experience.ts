@@ -1,0 +1,41 @@
+// ─────────────────────────────────────────────────────────────
+//  EDIT THIS FILE to update your work experience / timeline.
+//  Add new entries at the TOP (most recent first).
+// ─────────────────────────────────────────────────────────────
+
+export type Experience = {
+  role: string;
+  company: string;
+  period: string;
+  description: string;
+  tags: string[];
+};
+
+const experience: Experience[] = [
+  {
+    role: "Full Stack Developer",
+    company: "Freelance",
+    period: "2023 — Present",
+    description:
+      "Designing and building production-grade web and mobile applications for clients across Uganda and East Africa. Delivering end-to-end solutions from database architecture to CI/CD deployment on VPS infrastructure.",
+    tags: ["Next.js", "Laravel", "Flutter", "Docker"],
+  },
+  {
+    role: "Backend Developer",
+    company: "Freelance",
+    period: "2022 — 2023",
+    description:
+      "Built RESTful APIs and admin dashboards for local businesses. Developed a SACCO management platform and an e-learning system using Laravel, serving hundreds of users daily.",
+    tags: ["Laravel", "MySQL", "REST APIs"],
+  },
+  {
+    role: "Junior Web Developer",
+    company: "Self-taught & Open Source",
+    period: "2021 — 2022",
+    description:
+      "Learned full-stack web development through building real projects. Contributed to open-source tools and built personal projects to sharpen skills in React, PHP, and databases.",
+    tags: ["React", "PHP", "JavaScript"],
+  },
+];
+
+export default experience;
