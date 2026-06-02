@@ -1,12 +1,7 @@
 @import "tailwindcss";
 
-:root {
-  --font-geist: var(--font-geist);
-}
-
-* {
-  box-sizing: border-box;
-}
+/* Tell Tailwind v4 to use .dark class on <html> for dark: prefix */
+@custom-variant dark (&:where(.dark, .dark *));
 
 html {
   scroll-behavior: smooth;
