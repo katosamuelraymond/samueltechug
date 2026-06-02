@@ -1,0 +1,41 @@
+// ─────────────────────────────────────────────────────────────
+//  EDIT THIS FILE to add testimonials from clients or colleagues.
+//  Add as many as you like — only the first 3 show by default.
+// ─────────────────────────────────────────────────────────────
+
+export type Testimonial = {
+  name: string;
+  role: string;
+  company: string;
+  quote: string;
+  initials: string; // 2 letters shown as avatar if no photo
+};
+
+const testimonials: Testimonial[] = [
+  {
+    name: "Client Name",
+    role: "CEO",
+    company: "Company Name",
+    quote:
+      "Samuel delivered our e-commerce platform on time and beyond expectations. His attention to detail and proactive communication made the whole process smooth. Highly recommended.",
+    initials: "CN",
+  },
+  {
+    name: "Client Name",
+    role: "Operations Manager",
+    company: "Company Name",
+    quote:
+      "The POS system Samuel built transformed how we manage our branches. Real-time inventory and clean reporting saved us hours every week. Exceptional work.",
+    initials: "CN",
+  },
+  {
+    name: "Client Name",
+    role: "Founder",
+    company: "Company Name",
+    quote:
+      "Working with Samuel was a great experience. He understood our vision quickly and built exactly what we needed — clean code, good documentation, and reliable deployment.",
+    initials: "CN",
+  },
+];
+
+export default testimonials;
