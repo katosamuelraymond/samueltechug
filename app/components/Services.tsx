@@ -2,7 +2,8 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import services from "@/data/services";
+import servicesData from "@/data/services.json";
+const services = servicesData as Array<{ icon: string; title: string; description: string; features: string[] }>;
 
 export default function Services() {
   const ref = useRef(null);

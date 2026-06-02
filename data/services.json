@@ -1,0 +1,26 @@
+[
+  {
+    "icon": "🌐",
+    "title": "Web Development",
+    "description": "Full-stack web applications built with modern frameworks. From landing pages to complex SaaS platforms with authentication, payments, and admin dashboards.",
+    "features": ["Next.js / React", "Laravel / NestJS", "REST & GraphQL APIs", "Database design"]
+  },
+  {
+    "icon": "📱",
+    "title": "Mobile Development",
+    "description": "Cross-platform mobile apps for iOS and Android using Flutter. Offline-first architecture, real-time sync, and smooth native-feeling interfaces.",
+    "features": ["Flutter / Dart", "iOS & Android", "Offline-first", "Supabase / Firebase"]
+  },
+  {
+    "icon": "🚀",
+    "title": "DevOps & Deployment",
+    "description": "End-to-end deployment infrastructure. Docker containers, CI/CD pipelines, VPS configuration, and SSL setup so your app is always live and secure.",
+    "features": ["Docker & Compose", "GitHub Actions CI/CD", "Traefik + SSL", "VPS management"]
+  },
+  {
+    "icon": "🗄️",
+    "title": "Database & Backend",
+    "description": "Scalable backend systems with clean architecture. Multi-tenant databases, role-based access control, financial systems, and automated reporting.",
+    "features": ["PostgreSQL / MySQL", "Prisma / Eloquent ORM", "Role-based access", "Financial systems"]
+  }
+]

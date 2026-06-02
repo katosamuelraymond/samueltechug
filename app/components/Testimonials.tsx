@@ -2,7 +2,8 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import testimonials from "@/data/testimonials";
+import testimonialsData from "@/data/testimonials.json";
+const testimonials = testimonialsData as Array<{ name: string; role: string; company: string; quote: string; initials: string }>;
 
 export default function Testimonials() {
   const ref = useRef(null);

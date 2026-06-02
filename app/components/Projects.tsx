@@ -2,7 +2,8 @@
 
 import { useState, useRef } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
-import projects from "@/data/projects";
+import projectsData from "@/data/projects.json";
+const projects = projectsData as Array<{ title: string; subtitle: string; description: string; tech: string[]; tags: string[]; github: string; live?: string }>;
 
 const allTags = ["All", ...Array.from(new Set(projects.flatMap((p) => p.tags))).sort()];
 

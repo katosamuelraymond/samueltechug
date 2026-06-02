@@ -3,7 +3,7 @@
 import { motion, useInView, useMotionValue, useSpring, animate } from "framer-motion";
 import { useRef, useEffect } from "react";
 import Image from "next/image";
-import profile from "@/data/profile";
+import profile from "@/data/profile.json";
 
 function AnimatedCounter({ value, suffix = "" }: { value: number; suffix: string }) {
   const ref = useRef<HTMLSpanElement>(null);

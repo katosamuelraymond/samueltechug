@@ -12,12 +12,14 @@ const links = [
   { href: "#contact",     label: "Contact" },
 ];
 
-export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [dark, setDark] = useState(true);
+const NAVBAR_HEIGHT = 72;
 
-  // On mount, read saved preference
+export default function Navbar() {
+  const [scrolled, setScrolled]   = useState(false);
+  const [menuOpen, setMenuOpen]   = useState(false);
+  const [dark, setDark]           = useState(true);
+  const [active, setActive]       = useState("");
+
   useEffect(() => {
     const saved = localStorage.getItem("theme");
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -34,15 +36,29 @@ export default function Navbar() {
   };
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll);
+    const onScroll = () => {
+      setScrolled(window.scrollY > 20);
+
+      // Highlight the active section
+      const sections = links.map((l) => l.href.slice(1));
+      for (let i = sections.length - 1; i >= 0; i--) {
+        const el = document.getElementById(sections[i]);
+        if (el && el.getBoundingClientRect().top <= NAVBAR_HEIGHT + 20) {
+          setActive("#" + sections[i]);
+          break;
+        }
+      }
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
   const scrollTo = (href: string) => {
     setMenuOpen(false);
     const el = document.querySelector(href);
-    if (el) el.scrollIntoView({ behavior: "smooth" });
+    if (!el) return;
+    const top = el.getBoundingClientRect().top + window.scrollY - NAVBAR_HEIGHT;
+    window.scrollTo({ top, behavior: "smooth" });
   };
 
   return (
@@ -66,12 +82,16 @@ export default function Navbar() {
         </motion.button>
 
         {/* Desktop nav */}
-        <ul className="hidden md:flex items-center gap-8">
+        <ul className="hidden md:flex items-center gap-6">
           {links.map((link) => (
             <li key={link.href}>
               <button
                 onClick={() => scrollTo(link.href)}
-                className="text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-orange-500 dark:hover:text-orange-400 transition-colors duration-200"
+                className={`text-sm font-medium transition-colors duration-200 ${
+                  active === link.href
+                    ? "text-orange-500"
+                    : "text-zinc-600 dark:text-zinc-300 hover:text-orange-500 dark:hover:text-orange-400"
+                }`}
               >
                 {link.label}
               </button>
@@ -80,43 +100,37 @@ export default function Navbar() {
         </ul>
 
         <div className="flex items-center gap-3">
-          {/* Theme toggle */}
           <button
             onClick={toggleTheme}
             aria-label="Toggle theme"
             className="p-2 rounded-full text-zinc-500 dark:text-zinc-400 hover:text-orange-500 dark:hover:text-orange-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
           >
             {dark ? (
-              // Sun icon — currently dark, click to go light
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
               </svg>
             ) : (
-              // Moon icon — currently light, click to go dark
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
               </svg>
             )}
           </button>
 
-          {/* Hamburger */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="md:hidden p-2 text-zinc-600 dark:text-zinc-300 hover:text-orange-500"
             aria-label="Toggle menu"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {menuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
+              {menuOpen
+                ? <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                : <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              }
             </svg>
           </button>
         </div>
       </div>
 
-      {/* Mobile menu */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
@@ -130,7 +144,11 @@ export default function Navbar() {
                 <li key={link.href}>
                   <button
                     onClick={() => scrollTo(link.href)}
-                    className="w-full text-left py-3 px-4 text-sm font-medium text-zinc-600 dark:text-zinc-300 hover:text-orange-500 dark:hover:text-orange-400 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors"
+                    className={`w-full text-left py-3 px-4 text-sm font-medium rounded-lg transition-colors ${
+                      active === link.href
+                        ? "text-orange-500 bg-orange-500/10"
+                        : "text-zinc-600 dark:text-zinc-300 hover:text-orange-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    }`}
                   >
                     {link.label}
                   </button>
