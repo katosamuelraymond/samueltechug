@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
+// No edge runtime — use default Node.js for standalone Docker compatibility
 export const alt = "Kato Samuel — Full Stack & Mobile Developer";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";

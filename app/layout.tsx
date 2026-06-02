@@ -42,6 +42,7 @@ export const metadata: Metadata = {
   },
 
   // Open Graph — controls how link looks when shared on WhatsApp, Facebook, LinkedIn
+  // Next.js auto-picks up app/opengraph-image.tsx as the og:image — no need to specify manually
   openGraph: {
     type: "website",
     url: BASE_URL,
@@ -50,23 +51,14 @@ export const metadata: Metadata = {
     description:
       "Building production-grade web and mobile applications from Kampala, Uganda. Next.js, Laravel, Flutter, Docker.",
     locale: "en_US",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "Kato Samuel — Full Stack & Mobile Developer",
-      },
-    ],
   },
 
-  // Twitter / X card — controls how link looks when shared on Twitter/X
+  // Twitter / X card
   twitter: {
     card: "summary_large_image",
     title: "Kato Samuel — Full Stack & Mobile Developer",
     description:
       "Building production-grade web and mobile applications from Kampala, Uganda.",
-    images: ["/og-image.png"],
   },
 
   // Prevent search engines from indexing admin routes

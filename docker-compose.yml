@@ -2,12 +2,25 @@ services:
   app:
     image: ghcr.io/katosamuelraymond/samueltechug:latest
     restart: always
+    env_file: .env
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.samueltechug.rule=Host(`samueltechug.dev`) || Host(`www.samueltechug.dev`)"
+
+      # Main site — samueltechug.dev only
+      - "traefik.http.routers.samueltechug.rule=Host(`samueltechug.dev`)"
       - "traefik.http.routers.samueltechug.entrypoints=websecure"
       - "traefik.http.routers.samueltechug.tls.certresolver=le"
       - "traefik.http.services.samueltechug.loadbalancer.server.port=3000"
+
+      # www → non-www permanent redirect (301) — fixes duplicate content for Google
+      - "traefik.http.routers.samueltechug-www.rule=Host(`www.samueltechug.dev`)"
+      - "traefik.http.routers.samueltechug-www.entrypoints=websecure"
+      - "traefik.http.routers.samueltechug-www.tls.certresolver=le"
+      - "traefik.http.routers.samueltechug-www.middlewares=www-to-apex"
+      - "traefik.http.middlewares.www-to-apex.redirectregex.regex=^https://www\\.samueltechug\\.dev/(.*)"
+      - "traefik.http.middlewares.www-to-apex.redirectregex.replacement=https://samueltechug.dev/$${1}"
+      - "traefik.http.middlewares.www-to-apex.redirectregex.permanent=true"
+
     networks:
       - traefik_public
 networks:
