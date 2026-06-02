@@ -2,76 +2,9 @@
 
 import { useState, useRef } from "react";
 import { motion, useInView, AnimatePresence } from "framer-motion";
+import projects from "@/data/projects";
 
-const projects = [
-  {
-    title: "Creative Cube",
-    subtitle: "Full-Stack SaaS E-Commerce Platform",
-    description:
-      "Architected a production-ready SaaS furniture e-commerce platform with server-component architecture, structured Prisma database migrations, Cloudinary media management, and automated CI/CD deployment.",
-    tech: ["Next.js", "TypeScript", "Prisma", "PostgreSQL", "Cloudinary", "Tailwind CSS", "Docker"],
-    github: "https://github.com/katosamuelraymond/creative-cube-next",
-    live: "https://next.conquerer.org",
-    tags: ["Next.js", "TypeScript", "Docker"],
-  },
-  {
-    title: "POS System",
-    subtitle: "Enterprise Point-of-Sale and ERP",
-    description:
-      "Built a full-featured POS and ERP platform with multi-branch support, real-time inventory tracking, financial reporting, and fine-grained role-based access control for multiple user roles.",
-    tech: ["Laravel", "React", "MySQL", "Laravel Sanctum", "Spatie Permissions", "Docker"],
-    github: "https://github.com/katosamuelraymond/POS_SYSTEM",
-    live: "https://pos-staging.conquerer.org",
-    tags: ["Laravel", "React", "Docker"],
-  },
-  {
-    title: "AgroLink",
-    subtitle: "Agricultural Supply Chain Mobile App",
-    description:
-      "Engineered an offline-first Flutter application connecting farmers, buyers, and transporters in low connectivity rural environments. Designed to reduce post-harvest losses and improve agricultural trade efficiency across Uganda.",
-    tech: ["Flutter", "Dart", "Hive", "Offline-first Architecture"],
-    github: "https://github.com/katosamuelraymond/agrolink",
-    tags: ["Flutter", "Dart"],
-  },
-  {
-    title: "Fintrack",
-    subtitle: "Personal Finance Mobile Application",
-    description:
-      "Built a cross-platform mobile finance manager with income and expense tracking, budget goal setting, and visual analytics dashboards. Integrated Supabase for real-time data synchronisation and secure multi-device authentication.",
-    tech: ["Flutter", "Dart", "Supabase", "PostgreSQL"],
-    github: "https://github.com/katosamuelraymond/Fintrack",
-    tags: ["Flutter", "Dart"],
-  },
-  {
-    title: "Savings SACCO",
-    subtitle: "SACCO Management System",
-    description:
-      "Designed a full SACCO platform for member registration, savings, loan applications, repayment schedules, and automated financial statements. Replaced entirely manual bookkeeping with automated workflows.",
-    tech: ["Laravel", "MySQL", "Role-Based Access Control"],
-    github: "https://github.com/katosamuelraymond/savings-sacco",
-    tags: ["Laravel"],
-  },
-  {
-    title: "E-Learning Platform",
-    subtitle: "Learning Management System",
-    description:
-      "Developed a comprehensive LMS supporting course creation, online examinations, assignment submission, and student performance tracking.",
-    tech: ["Laravel", "MySQL", "Tailwind CSS"],
-    github: "https://github.com/katosamuelraymond/elearning-platform",
-    tags: ["Laravel"],
-  },
-  {
-    title: "Zila Insurance",
-    subtitle: "CMS Platform",
-    description:
-      "Built a corporate website with integrated CMS enabling non-technical staff to manage pages, publish articles, and update content independently. Implemented React frontend with Inertia.js for seamless SPA experience.",
-    tech: ["Laravel 11", "React", "Inertia.js"],
-    github: "https://github.com/katosamuelraymond/zilawebsite",
-    tags: ["Laravel", "React"],
-  },
-];
-
-const allTags = ["All", "Next.js", "TypeScript", "Laravel", "React", "Flutter", "Dart", "Docker"];
+const allTags = ["All", ...Array.from(new Set(projects.flatMap((p) => p.tags))).sort()];
 
 export default function Projects() {
   const [active, setActive] = useState("All");
@@ -79,12 +12,10 @@ export default function Projects() {
   const inView = useInView(ref, { once: true, margin: "-100px" });
 
   const filtered =
-    active === "All"
-      ? projects
-      : projects.filter((p) => p.tags.includes(active));
+    active === "All" ? projects : projects.filter((p) => p.tags.includes(active));
 
   return (
-    <section id="projects" className="py-24 bg-zinc-900">
+    <section id="projects" className="py-24 bg-zinc-900 dark:bg-zinc-900">
       <div className="max-w-6xl mx-auto px-4 sm:px-6" ref={ref}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -93,7 +24,7 @@ export default function Projects() {
           className="text-center mb-12"
         >
           <p className="text-orange-400 font-mono text-sm tracking-widest uppercase mb-3">What I&apos;ve built</p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">Featured Projects</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 dark:text-white">Featured Projects</h2>
         </motion.div>
 
         {/* Filter tabs */}
@@ -130,7 +61,7 @@ export default function Projects() {
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.35, delay: i * 0.05 }}
                 whileHover={{ y: -6 }}
-                className="bg-zinc-950 border border-zinc-800 rounded-xl p-6 flex flex-col hover:border-orange-500/30 transition-colors duration-300 group"
+                className="bg-zinc-950 dark:bg-zinc-950 border border-zinc-800 rounded-xl p-6 flex flex-col hover:border-orange-500/30 transition-colors duration-300 group"
               >
                 <div className="flex-1">
                   <h3 className="text-lg font-bold text-white group-hover:text-orange-400 transition-colors mb-1">

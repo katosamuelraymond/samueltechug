@@ -28,8 +28,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geist.variable} dark`}>
-      <body className="min-h-full bg-zinc-950 text-zinc-100 antialiased">{children}</body>
+    <html lang="en" className={`${geist.variable} dark`} suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var t = localStorage.getItem('theme');
+                var d = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                if (t === 'light' || (!t && !d)) {
+                  document.documentElement.classList.remove('dark');
+                } else {
+                  document.documentElement.classList.add('dark');
+                }
+              } catch(e) {}
+            `,
+          }}
+        />
+      </head>
+      <body className="min-h-full bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 antialiased transition-colors duration-300">
+        {children}
+      </body>
     </html>
   );
 }

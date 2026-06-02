@@ -1,8 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { useInView } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
+import Image from "next/image";
 
 const stats = [
   { value: "7+", label: "Projects Shipped" },
@@ -16,7 +16,7 @@ export default function About() {
   const inView = useInView(ref, { once: true, margin: "-100px" });
 
   return (
-    <section id="about" className="py-24 bg-zinc-900">
+    <section id="about" className="py-24 bg-zinc-900 dark:bg-zinc-900">
       <div className="max-w-6xl mx-auto px-4 sm:px-6" ref={ref}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -25,7 +25,7 @@ export default function About() {
           className="text-center mb-16"
         >
           <p className="text-orange-400 font-mono text-sm tracking-widest uppercase mb-3">About me</p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">Who I Am</h2>
+          <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 dark:text-white">Who I Am</h2>
         </motion.div>
 
         <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -34,12 +34,19 @@ export default function About() {
             animate={inView ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <div className="relative">
-              <div className="w-64 h-64 mx-auto md:mx-0 rounded-2xl bg-gradient-to-br from-orange-500/20 to-zinc-800 border border-zinc-700 flex items-center justify-center">
-                <span className="text-7xl font-black text-orange-500/30 select-none">SK</span>
+            <div className="relative w-64 h-64 mx-auto md:mx-0">
+              <div className="w-64 h-64 rounded-2xl overflow-hidden border-2 border-orange-500/30 shadow-xl shadow-orange-500/10">
+                <Image
+                  src="/profile.jpg"
+                  alt="Kato Samuel"
+                  width={256}
+                  height={256}
+                  className="w-full h-full object-cover object-top"
+                  priority
+                />
               </div>
-              <div className="absolute -bottom-3 -right-3 w-24 h-24 rounded-xl bg-orange-500/10 border border-orange-500/20" />
-              <div className="absolute -top-3 -left-3 w-16 h-16 rounded-lg bg-zinc-800 border border-zinc-700" />
+              <div className="absolute -bottom-3 -right-3 w-24 h-24 rounded-xl bg-orange-500/10 border border-orange-500/20 -z-10" />
+              <div className="absolute -top-3 -left-3 w-16 h-16 rounded-lg bg-zinc-800 border border-zinc-700 -z-10" />
             </div>
           </motion.div>
 
@@ -50,7 +57,7 @@ export default function About() {
             className="space-y-5"
           >
             <h3 className="text-2xl font-bold text-white">
-              Samuel Kato Raymond
+              Kato Samuel
               <span className="block text-base font-normal text-zinc-400 mt-1">Kampala, Uganda</span>
             </h3>
             <p className="text-zinc-300 leading-relaxed">

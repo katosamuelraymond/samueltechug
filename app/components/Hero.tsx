@@ -37,8 +37,8 @@ export default function Hero() {
           transition={{ duration: 0.6, delay: 0.1 }}
           className="text-5xl sm:text-6xl md:text-7xl font-extrabold text-white leading-tight mb-4"
         >
-          Samuel Kato
-          <span className="text-orange-500"> Raymond</span>
+          Kato
+          <span className="text-orange-500"> Samuel</span>
         </motion.h1>
 
         <motion.div

@@ -1,8 +1,8 @@
 export default function Footer() {
   return (
-    <footer className="bg-zinc-950 border-t border-zinc-800 py-10">
+    <footer className="bg-zinc-100 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 py-10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <p className="text-zinc-500 text-sm">
+        <p className="text-zinc-500 dark:text-zinc-500 text-sm">
           © {new Date().getFullYear()} Samuel Kato Raymond. All rights reserved.
         </p>
         <div className="flex items-center gap-5">

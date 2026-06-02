@@ -17,7 +17,7 @@ export default function Contact() {
   };
 
   return (
-    <section id="contact" className="py-24 bg-zinc-950">
+    <section id="contact" className="py-24 bg-white dark:bg-zinc-950">
       <div className="max-w-4xl mx-auto px-4 sm:px-6" ref={ref}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -26,8 +26,8 @@ export default function Contact() {
           className="text-center mb-16"
         >
           <p className="text-orange-400 font-mono text-sm tracking-widest uppercase mb-3">Say hello</p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">Get In Touch</h2>
-          <p className="text-zinc-400 mt-4 max-w-xl mx-auto">
+          <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 dark:text-white">Get In Touch</h2>
+          <p className="text-zinc-500 dark:text-zinc-400 mt-4 max-w-xl mx-auto">
             Have a project in mind or want to collaborate? I&apos;d love to hear from you.
             Send me a message and I&apos;ll get back to you as soon as possible.
           </p>
@@ -123,18 +123,18 @@ export default function Contact() {
                       value={form.name}
                       onChange={(e) => setForm({ ...form, name: e.target.value })}
                       placeholder="Your name"
-                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-orange-500 transition-colors text-sm"
+                      className="w-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-3 text-zinc-900 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none focus:border-orange-500 transition-colors text-sm"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-zinc-300 mb-2">Email</label>
+                    <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">Email</label>
                     <input
                       type="email"
                       required
                       value={form.email}
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
                       placeholder="your@email.com"
-                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-orange-500 transition-colors text-sm"
+                      className="w-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-3 text-zinc-900 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none focus:border-orange-500 transition-colors text-sm"
                     />
                   </div>
                 </div>
@@ -146,7 +146,7 @@ export default function Contact() {
                     value={form.message}
                     onChange={(e) => setForm({ ...form, message: e.target.value })}
                     placeholder="Tell me about your project..."
-                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-orange-500 transition-colors text-sm resize-none"
+                    className="w-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-3 text-zinc-900 dark:text-zinc-200 placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none focus:border-orange-500 transition-colors text-sm resize-none"
                   />
                 </div>
                 <motion.button
