@@ -19,15 +19,17 @@ export default function AdminPage() {
   const [password,  setPassword]  = useState("");
   const [authErr,   setAuthErr]   = useState("");
   const [logging,   setLogging]   = useState(false);
-  const [tab,       setTab]       = useState<Section>("profile");
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [data,      setData]      = useState<any>(null);
-  const [sha,       setSha]       = useState("");
-  const [loading,   setLoading]   = useState(false);
-  const [saving,    setSaving]    = useState(false);
-  const [saved,     setSaved]     = useState(false);
-  const [error,     setError]     = useState("");
+  const [tab,        setTab]       = useState<Section>("profile");
+  const [saving,     setSaving]    = useState(false);
+  const [saved,      setSaved]     = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // All fetch state in one object — single setState call per transition, no cascading renders
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type FS = { loading: boolean; data: any; sha: string; error: string };
+  const IDLE: FS = { loading: false, data: null, sha: "", error: "" };
+  const [fs, setFs] = useState<FS>(IDLE);
+  const { loading, data, sha, error } = fs;
 
   // Check existing session on mount
   useEffect(() => {
@@ -44,30 +46,25 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!authed) return;
-    if (tab === "resume") { setData(null); setLoading(false); setError(""); return; }
+    if (tab === "resume") { setFs(IDLE); return; } // eslint-disable-line react-hooks/exhaustive-deps
 
     let cancelled = false;
-    setLoading(true);
-    setData(null);
-    setError("");
+    setFs({ loading: true, data: null, sha: "", error: "" }); // single setState
 
     fetch(`/api/admin/content?section=${tab}`)
       .then((r) => r.json())
       .then((json) => {
         if (cancelled) return;
         if (!json.content) throw new Error(json.error ?? "Failed to load");
-        setData(json.content);
-        setSha(json.sha);
+        setFs({ loading: false, data: json.content, sha: json.sha, error: "" });
       })
       .catch((e: unknown) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Unknown error");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+        if (!cancelled)
+          setFs({ loading: false, data: null, sha: "", error: e instanceof Error ? e.message : "Unknown error" });
       });
 
     return () => { cancelled = true; };
-  }, [authed, tab, refreshKey]);
+  }, [authed, tab, refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function login(e: React.FormEvent) {
     e.preventDefault(); setAuthErr(""); setLogging(true);
@@ -88,7 +85,8 @@ export default function AdminPage() {
   }
 
   async function save() {
-    setSaving(true); setError(""); setSaved(false);
+    setSaving(true); setSaved(false);
+    setFs((prev) => ({ ...prev, error: "" }));
     try {
       const res  = await fetch("/api/admin/content", {
         method: "PUT", headers: { "Content-Type": "application/json" },
@@ -100,7 +98,7 @@ export default function AdminPage() {
       setTimeout(() => setSaved(false), 6000);
       setRefreshKey((k) => k + 1); // re-fetch to get new SHA
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Save failed");
+      setFs((prev) => ({ ...prev, error: e instanceof Error ? e.message : "Save failed" }));
     } finally { setSaving(false); }
   }
 
@@ -218,11 +216,11 @@ export default function AdminPage() {
         {/* Content editors */}
         {!loading && data && tab !== "resume" && (
           <>
-            {tab === "profile"      && <ProfileEditor data={data} onChange={setData} />}
-            {tab === "projects"     && <ProjectsEditor data={data} onChange={setData} />}
-            {tab === "experience"   && <ArrayEditor data={data} onChange={setData} fields={experienceFields} itemLabel="role" emptyLabel="experience entry" />}
-            {tab === "testimonials" && <ArrayEditor data={data} onChange={setData} fields={testimonialFields} itemLabel="name" emptyLabel="testimonial" />}
-            {tab === "services"     && <ArrayEditor data={data} onChange={setData} fields={serviceFields} itemLabel="title" emptyLabel="service" />}
+            {tab === "profile"      && <ProfileEditor data={data} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))}/>}
+            {tab === "projects"     && <ProjectsEditor data={data} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))}/>}
+            {tab === "experience"   && <ArrayEditor data={data} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))}fields={experienceFields} itemLabel="role" emptyLabel="experience entry" />}
+            {tab === "testimonials" && <ArrayEditor data={data} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))}fields={testimonialFields} itemLabel="name" emptyLabel="testimonial" />}
+            {tab === "services"     && <ArrayEditor data={data} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))}fields={serviceFields} itemLabel="title" emptyLabel="service" />}
 
             {/* Sticky save bar */}
             <div className="mt-8 sticky bottom-4 z-10">
