@@ -19,14 +19,17 @@ export default function AdminPage() {
   const [password,  setPassword]  = useState("");
   const [authErr,   setAuthErr]   = useState("");
   const [logging,   setLogging]   = useState(false);
-  const [tab,       setTab]       = useState<Section>("profile");
+  const [tab,        setTab]       = useState<Section>("profile");
+  const [saving,     setSaving]    = useState(false);
+  const [saved,      setSaved]     = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // All fetch state in one object — single setState call per transition, no cascading renders
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [data,      setData]      = useState<any>(null);
-  const [sha,       setSha]       = useState("");
-  const [loading,   setLoading]   = useState(false);
-  const [saving,    setSaving]    = useState(false);
-  const [saved,     setSaved]     = useState(false);
-  const [error,     setError]     = useState("");
+  type FS = { loading: boolean; data: any; sha: string; error: string };
+  const IDLE: FS = { loading: false, data: null, sha: "", error: "" };
+  const [fs, setFs] = useState<FS>(IDLE);
+  const { loading, data, sha, error } = fs;
 
   // Check existing session on mount
   useEffect(() => {
@@ -36,20 +39,32 @@ export default function AdminPage() {
       .catch(() => setAuthed(false));
   }, []);
 
-  const load = useCallback(async (section: Section) => {
-    if (section === "resume") { setData(null); setLoading(false); setError(""); return; }
-    setLoading(true); setData(null); setError("");
-    try {
-      const res  = await fetch(`/api/admin/content?section=${section}`);
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "Failed to load");
-      setData(json.content); setSha(json.sha);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-    } finally { setLoading(false); }
+  // Reload button — forces the effect to re-run
+  const load = useCallback(() => {
+    setRefreshKey((k) => k + 1);
   }, []);
 
-  useEffect(() => { if (authed) load(tab); }, [authed, tab, load]);
+  useEffect(() => {
+    if (!authed) return;
+    if (tab === "resume") { setFs(IDLE); return; } // eslint-disable-line react-hooks/exhaustive-deps
+
+    let cancelled = false;
+    setFs({ loading: true, data: null, sha: "", error: "" }); // single setState
+
+    fetch(`/api/admin/content?section=${tab}`)
+      .then((r) => r.json())
+      .then((json) => {
+        if (cancelled) return;
+        if (!json.content) throw new Error(json.error ?? "Failed to load");
+        setFs({ loading: false, data: json.content, sha: json.sha, error: "" });
+      })
+      .catch((e: unknown) => {
+        if (!cancelled)
+          setFs({ loading: false, data: null, sha: "", error: e instanceof Error ? e.message : "Unknown error" });
+      });
+
+    return () => { cancelled = true; };
+  }, [authed, tab, refreshKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function login(e: React.FormEvent) {
     e.preventDefault(); setAuthErr(""); setLogging(true);
@@ -70,7 +85,8 @@ export default function AdminPage() {
   }
 
   async function save() {
-    setSaving(true); setError(""); setSaved(false);
+    setSaving(true); setSaved(false);
+    setFs((prev) => ({ ...prev, error: "" }));
     try {
       const res  = await fetch("/api/admin/content", {
         method: "PUT", headers: { "Content-Type": "application/json" },
@@ -80,9 +96,9 @@ export default function AdminPage() {
       if (!res.ok) throw new Error(json.error ?? "Save failed");
       setSaved(true);
       setTimeout(() => setSaved(false), 6000);
-      await load(tab); // refresh SHA
+      setRefreshKey((k) => k + 1); // re-fetch to get new SHA
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Save failed");
+      setFs((prev) => ({ ...prev, error: e instanceof Error ? e.message : "Save failed" }));
     } finally { setSaving(false); }
   }
 
@@ -167,7 +183,7 @@ export default function AdminPage() {
             <p className="text-zinc-500 text-xs sm:text-sm">{TABS.find((t) => t.id === tab)?.desc}</p>
           </div>
           {tab !== "resume" && (
-            <button type="button" onClick={() => load(tab)} title="Reload from GitHub"
+            <button type="button" onClick={load} title="Reload from GitHub"
               className="p-2 text-zinc-500 hover:text-orange-400 transition-colors">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
             </button>
@@ -188,7 +204,7 @@ export default function AdminPage() {
         {/* Error */}
         {error && !loading && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-4 flex gap-3">
-            <span className="text-xl flex-shrink-0">⚠️</span>
+            <span className="text-xl shrink-0">⚠️</span>
             <div>
               <p className="text-red-400 font-medium text-sm">Error loading data</p>
               <p className="text-red-300 text-xs mt-1">{error}</p>
@@ -200,11 +216,11 @@ export default function AdminPage() {
         {/* Content editors */}
         {!loading && data && tab !== "resume" && (
           <>
-            {tab === "profile"      && <ProfileEditor data={data} onChange={setData} />}
-            {tab === "projects"     && <ProjectsEditor data={data} onChange={setData} />}
-            {tab === "experience"   && <ArrayEditor data={data} onChange={setData} fields={experienceFields} itemLabel="role" emptyLabel="experience entry" />}
-            {tab === "testimonials" && <ArrayEditor data={data} onChange={setData} fields={testimonialFields} itemLabel="name" emptyLabel="testimonial" />}
-            {tab === "services"     && <ArrayEditor data={data} onChange={setData} fields={serviceFields} itemLabel="title" emptyLabel="service" />}
+            {tab === "profile"      && <ProfileEditor data={data} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))}/>}
+            {tab === "projects"     && <ProjectsEditor data={data} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))}/>}
+            {tab === "experience"   && <ArrayEditor data={data} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))}fields={experienceFields} itemLabel="role" emptyLabel="experience entry" />}
+            {tab === "testimonials" && <ArrayEditor data={data} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))}fields={testimonialFields} itemLabel="name" emptyLabel="testimonial" />}
+            {tab === "services"     && <ArrayEditor data={data} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))}fields={serviceFields} itemLabel="title" emptyLabel="service" />}
 
             {/* Sticky save bar */}
             <div className="mt-8 sticky bottom-4 z-10">
@@ -378,7 +394,7 @@ function ProjectsEditor({ data, onChange }: { data: Record<string, unknown>[]; o
                               {repo.description && <p className="text-xs text-zinc-500 truncate">{repo.description}</p>}
                             </div>
                             {repo.language && (
-                              <span className="text-xs text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full flex-shrink-0">{repo.language}</span>
+                              <span className="text-xs text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full shrink-0">{repo.language}</span>
                             )}
                           </button>
                         ))}
@@ -543,10 +559,10 @@ function Field({ label, value, onChange, multiline, hint, placeholder }: { label
 }
 
 function NumBadge({ n }: { n: number }) {
-  return <div className="w-7 h-7 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400 font-bold text-xs flex-shrink-0">{n}</div>;
+  return <div className="w-7 h-7 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400 font-bold text-xs shrink-0">{n}</div>;
 }
 function ChevronIcon({ open }: { open: boolean }) {
-  return <svg className={`w-4 h-4 text-zinc-500 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>;
+  return <svg className={`w-4 h-4 text-zinc-500 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>;
 }
 function AddBtn({ label, onClick }: { label: string; onClick: () => void }) {
   return (
@@ -560,7 +576,7 @@ function Empty({ label }: { label: string }) {
   return <div className="text-center py-10 text-zinc-500"><p className="text-3xl mb-2">📭</p><p className="text-sm">No {label} yet. Add one below.</p></div>;
 }
 function Spinner() {
-  return <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block flex-shrink-0" />;
+  return <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block shrink-0" />;
 }
 
 /* ──────────────────────────────────────────
