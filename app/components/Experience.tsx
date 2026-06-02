@@ -2,7 +2,8 @@
 
 import { motion, useInView } from "framer-motion";
 import { useRef } from "react";
-import experience from "@/data/experience";
+import experienceData from "@/data/experience.json";
+const experience = experienceData as Array<{ role: string; company: string; period: string; description: string; tags: string[] }>;
 
 export default function Experience() {
   const ref = useRef(null);

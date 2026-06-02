@@ -1,0 +1,24 @@
+{
+  "name": "Kato Samuel",
+  "title": "Full Stack & Mobile Developer",
+  "location": "Kampala, Uganda",
+  "email": "katosamuelraymondmarvinhosborn@gmail.com",
+  "github": "https://github.com/katosamuelraymond",
+  "roles": [
+    "Full Stack Developer",
+    "Mobile Developer",
+    "DevOps Engineer",
+    "Laravel Developer",
+    "Flutter Developer"
+  ],
+  "currentlyBuilding": "a SaaS inventory management platform",
+  "bio": "I'm a passionate full-stack and mobile developer with hands-on experience building production-grade web and mobile applications. I specialise in architecting scalable systems, designing clean APIs, and delivering complete end-to-end solutions across web and mobile platforms.",
+  "bio2": "With a strong foundation in both frontend and backend engineering, I bring ideas from concept to deployed product — handling everything from database design to CI/CD pipelines and server configuration.",
+  "stats": [
+    { "value": 13, "suffix": "+", "label": "Projects Shipped" },
+    { "value": 3,  "suffix": "+", "label": "Years Experience" },
+    { "value": 10, "suffix": "+", "label": "Happy Clients" },
+    { "value": 2,  "suffix": "",  "label": "Platforms (Web + Mobile)" }
+  ],
+  "resumeUrl": "/resume.pdf"
+}
