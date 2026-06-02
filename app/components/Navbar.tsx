@@ -55,10 +55,13 @@ export default function Navbar() {
 
   const scrollTo = (href: string) => {
     setMenuOpen(false);
-    const el = document.querySelector(href);
-    if (!el) return;
-    const top = el.getBoundingClientRect().top + window.scrollY - NAVBAR_HEIGHT;
-    window.scrollTo({ top, behavior: "smooth" });
+    // Wait for mobile menu animation to finish before scrolling
+    setTimeout(() => {
+      const el = document.getElementById(href.replace("#", ""));
+      if (!el) return;
+      const top = el.getBoundingClientRect().top + window.scrollY - NAVBAR_HEIGHT;
+      window.scrollTo({ top, behavior: "smooth" });
+    }, 150);
   };
 
   return (

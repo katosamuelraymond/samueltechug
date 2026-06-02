@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 
 type Section = "profile" | "projects" | "experience" | "testimonials" | "services" | "resume";
 
@@ -118,7 +119,7 @@ export default function AdminPage() {
             </button>
           </form>
           <p className="text-center text-zinc-600 text-xs mt-6">
-            <a href="/" className="hover:text-orange-400 transition-colors">← Back to site</a>
+            <Link href="/" className="hover:text-orange-400 transition-colors">← Back to site</Link>
           </p>
         </div>
       </div>
@@ -133,10 +134,10 @@ export default function AdminPage() {
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <span className="font-bold text-base">Kato<span className="text-orange-500">.</span> <span className="text-zinc-500 text-sm font-normal hidden sm:inline">Admin</span></span>
           <div className="flex items-center gap-4">
-            <a href="/" target="_blank" rel="noopener noreferrer" className="text-sm text-zinc-400 hover:text-orange-400 transition-colors hidden sm:flex items-center gap-1">
+            <Link href="/" target="_blank" rel="noopener noreferrer" className="text-sm text-zinc-400 hover:text-orange-400 transition-colors hidden sm:flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
               View Site
-            </a>
+            </Link>
             <button onClick={logout} className="text-sm text-zinc-400 hover:text-red-400 transition-colors">Sign out</button>
           </div>
         </div>
