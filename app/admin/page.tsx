@@ -134,11 +134,12 @@ export default function AdminPage() {
         <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <span className="font-bold text-base">Kato<span className="text-orange-500">.</span> <span className="text-zinc-500 text-sm font-normal hidden sm:inline">Admin</span></span>
           <div className="flex items-center gap-4">
-            <Link href="/" target="_blank" rel="noopener noreferrer" className="text-sm text-zinc-400 hover:text-orange-400 transition-colors hidden sm:flex items-center gap-1">
+            {/* Use <a> not <Link> here — opens in new tab, must not do client-side nav */}
+            <a href="/" target="_blank" rel="noopener noreferrer" className="text-sm text-zinc-400 hover:text-orange-400 transition-colors hidden sm:flex items-center gap-1">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
               View Site
-            </Link>
-            <button onClick={logout} className="text-sm text-zinc-400 hover:text-red-400 transition-colors">Sign out</button>
+            </a>
+            <button type="button" onClick={logout} className="text-sm text-zinc-400 hover:text-red-400 transition-colors">Sign out</button>
           </div>
         </div>
       </div>
@@ -147,7 +148,7 @@ export default function AdminPage() {
         {/* Section tiles */}
         <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 sm:gap-3 mb-8">
           {TABS.map((t) => (
-            <button key={t.id} onClick={() => setTab(t.id)}
+            <button type="button" key={t.id} onClick={() => setTab(t.id)}
               className={`flex flex-col items-center gap-1.5 p-3 sm:p-4 rounded-xl border transition-all ${
                 tab === t.id
                   ? "bg-orange-500/10 border-orange-500/50 text-orange-400"
@@ -166,7 +167,7 @@ export default function AdminPage() {
             <p className="text-zinc-500 text-xs sm:text-sm">{TABS.find((t) => t.id === tab)?.desc}</p>
           </div>
           {tab !== "resume" && (
-            <button onClick={() => load(tab)} title="Reload from GitHub"
+            <button type="button" onClick={() => load(tab)} title="Reload from GitHub"
               className="p-2 text-zinc-500 hover:text-orange-400 transition-colors">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
             </button>
@@ -179,7 +180,7 @@ export default function AdminPage() {
         {/* Loading */}
         {tab !== "resume" && loading && (
           <div className="flex flex-col items-center py-16 gap-3 text-zinc-500">
-            <Spinner size={10} />
+            <span className="w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
             <p className="text-sm">Loading from GitHub…</p>
           </div>
         )}
@@ -208,7 +209,7 @@ export default function AdminPage() {
             {/* Sticky save bar */}
             <div className="mt-8 sticky bottom-4 z-10">
               <div className="bg-zinc-900/95 backdrop-blur border border-zinc-700 rounded-2xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <button onClick={save} disabled={saving}
+                <button type="button" onClick={save} disabled={saving}
                   className="flex-1 sm:flex-none px-6 py-3 bg-orange-500 hover:bg-orange-400 disabled:opacity-60 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm">
                   {saving ? <><Spinner /> Saving…</> : <>💾 Save &amp; Deploy</>}
                 </button>
@@ -259,7 +260,7 @@ function ResumeUploader() {
         <input ref={inputRef} type="file" accept=".pdf" className="hidden"
           onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); }} />
 
-        <button onClick={() => inputRef.current?.click()} disabled={status === "uploading"}
+        <button type="button" onClick={() => inputRef.current?.click()} disabled={status === "uploading"}
           className="w-full py-10 border-2 border-dashed border-zinc-700 hover:border-orange-500 rounded-xl flex flex-col items-center gap-3 transition-colors group disabled:opacity-60">
           <span className="text-4xl">{status === "uploading" ? "⏳" : status === "done" ? "✅" : "📄"}</span>
           <span className="text-sm font-semibold text-zinc-300 group-hover:text-orange-400 transition-colors">
@@ -342,7 +343,7 @@ function ProjectsEditor({ data, onChange }: { data: Record<string, unknown>[]; o
       {data.length === 0 && <Empty label="projects" />}
       {data.map((item, i) => (
         <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-          <button className="w-full px-4 py-4 flex items-center justify-between gap-3 text-left"
+          <button type="button" className="w-full px-4 py-4 flex items-center justify-between gap-3 text-left"
             onClick={() => setOpen(open === i ? null : i)}>
             <div className="flex items-center gap-3 min-w-0">
               <NumBadge n={i + 1} />
@@ -357,7 +358,7 @@ function ProjectsEditor({ data, onChange }: { data: Record<string, unknown>[]; o
               <div className="bg-zinc-800/60 border border-zinc-700 rounded-xl p-3">
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs font-semibold text-zinc-400">🔗 Load from GitHub Repo</p>
-                  <button onClick={() => { fetchRepos(); setPickerFor(pickerFor === i ? null : i); }}
+                  <button type="button" onClick={() => { fetchRepos(); setPickerFor(pickerFor === i ? null : i); }}
                     className="text-xs text-orange-400 hover:text-orange-300 transition-colors font-medium">
                     {pickerFor === i ? "Close" : "Pick a repo →"}
                   </button>
@@ -370,7 +371,7 @@ function ProjectsEditor({ data, onChange }: { data: Record<string, unknown>[]; o
                     {repos && (
                       <div className="max-h-48 overflow-y-auto space-y-1 mt-2">
                         {repos.map((repo) => (
-                          <button key={repo.name} onClick={() => applyRepo(i, repo)}
+                          <button type="button" key={repo.name} onClick={() => applyRepo(i, repo)}
                             className="w-full text-left px-3 py-2.5 rounded-lg bg-zinc-900 hover:bg-zinc-700 transition-colors flex items-center justify-between gap-2">
                             <div className="min-w-0">
                               <p className="text-sm font-medium text-zinc-200 truncate">{repo.name}</p>
@@ -397,7 +398,7 @@ function ProjectsEditor({ data, onChange }: { data: Record<string, unknown>[]; o
               <Field label="GitHub URL"  value={item.github as string} onChange={(v) => update(i, "github", v)} placeholder="https://github.com/username/repo" />
               <Field label="Live URL (optional)" value={(item.live as string) ?? ""} onChange={(v) => update(i, "live", v)} placeholder="https://myproject.com" />
 
-              <button onClick={() => remove(i)} className="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm mt-2">
+              <button type="button" onClick={() => remove(i)} className="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm mt-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 Delete project
               </button>
@@ -487,7 +488,7 @@ function ArrayEditor({ data, onChange, fields, itemLabel, emptyLabel }: { data: 
       {data.length === 0 && <Empty label={emptyLabel + "s"} />}
       {data.map((item, i) => (
         <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-          <button className="w-full px-4 py-4 flex items-center justify-between gap-3 text-left"
+          <button type="button" className="w-full px-4 py-4 flex items-center justify-between gap-3 text-left"
             onClick={() => setOpen(open === i ? null : i)}>
             <div className="flex items-center gap-3 min-w-0">
               <NumBadge n={i + 1} />
@@ -549,7 +550,7 @@ function ChevronIcon({ open }: { open: boolean }) {
 }
 function AddBtn({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button onClick={onClick} className="w-full py-4 border-2 border-dashed border-zinc-700 hover:border-orange-500 rounded-xl text-zinc-400 hover:text-orange-400 transition-all text-sm font-semibold flex items-center justify-center gap-2">
+    <button type="button" onClick={onClick} className="w-full py-4 border-2 border-dashed border-zinc-700 hover:border-orange-500 rounded-xl text-zinc-400 hover:text-orange-400 transition-all text-sm font-semibold flex items-center justify-center gap-2">
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
       {label}
     </button>
@@ -558,8 +559,8 @@ function AddBtn({ label, onClick }: { label: string; onClick: () => void }) {
 function Empty({ label }: { label: string }) {
   return <div className="text-center py-10 text-zinc-500"><p className="text-3xl mb-2">📭</p><p className="text-sm">No {label} yet. Add one below.</p></div>;
 }
-function Spinner({ size = 4 }: { size?: number }) {
-  return <span className={`w-${size} h-${size} border-2 border-white/30 border-t-white rounded-full animate-spin inline-block`} />;
+function Spinner() {
+  return <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block flex-shrink-0" />;
 }
 
 /* ──────────────────────────────────────────
