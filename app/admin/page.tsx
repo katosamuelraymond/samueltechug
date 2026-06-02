@@ -306,123 +306,186 @@ function ResumeUploader() {
 }
 
 /* ──────────────────────────────────────────
-   Projects editor (with GitHub repo picker)
+   Projects editor — pick from GitHub repos
 ────────────────────────────────────────── */
+type GhRepo = { name: string; description: string; url: string; homepage: string; language: string };
+
+// Map GitHub primary language → sensible tech/tag defaults
+function repoToProject(repo: GhRepo) {
+  const title = repo.name.replace(/-|_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  const langMap: Record<string, { tech: string[]; tags: string[] }> = {
+    TypeScript:  { tech: ["Next.js", "TypeScript", "Tailwind CSS"], tags: ["Next.js", "TypeScript"] },
+    JavaScript:  { tech: ["Node.js", "JavaScript"],                  tags: ["JavaScript"] },
+    Dart:        { tech: ["Flutter", "Dart"],                        tags: ["Flutter", "Dart"] },
+    PHP:         { tech: ["Laravel", "PHP", "MySQL"],                tags: ["Laravel"] },
+    Blade:       { tech: ["Laravel", "Blade", "MySQL"],              tags: ["Laravel"] },
+    Python:      { tech: ["Python"],                                  tags: ["Python"] },
+  };
+  const defaults = langMap[repo.language] ?? { tech: repo.language ? [repo.language] : [], tags: [] };
+  return {
+    title,
+    subtitle: repo.description ? repo.description.slice(0, 80) : "",
+    description: repo.description ?? "",
+    tech: defaults.tech,
+    tags: defaults.tags,
+    github: repo.url,
+    live: repo.homepage ?? "",
+  };
+}
+
 function ProjectsEditor({ data, onChange }: { data: Record<string, unknown>[]; onChange: (d: unknown) => void }) {
-  const [open, setOpen]   = useState<number | null>(null);
-  const [repos, setRepos] = useState<GhRepo[] | null>(null);
-  const [loadingRepos, setLoadingRepos] = useState(false);
-  const [repoErr, setRepoErr] = useState("");
-  const [pickerFor, setPickerFor] = useState<number | null>(null);
+  const [open,         setOpen]         = useState<number | null>(null);
+  const [repos,        setRepos]        = useState<GhRepo[] | null>(null);
+  const [loadingRepos, setLoadingRepos] = useState(true);
+  const [repoErr,      setRepoErr]      = useState("");
+  const [showPicker,   setShowPicker]   = useState(true);
 
-  type GhRepo = { name: string; description: string; url: string; homepage: string; language: string };
+  // Fetch repos immediately on mount
+  useEffect(() => {
+    fetch("/api/admin/repos")
+      .then((r) => r.json())
+      .then((json) => {
+        if (Array.isArray(json)) setRepos(json);
+        else throw new Error(json.error ?? "Failed");
+      })
+      .catch((e: unknown) => setRepoErr(e instanceof Error ? e.message : "Could not load repos"))
+      .finally(() => setLoadingRepos(false));
+  }, []);
 
-  async function fetchRepos() {
-    if (repos) return;
-    setLoadingRepos(true); setRepoErr("");
-    try {
-      const res  = await fetch("/api/admin/repos");
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
-      setRepos(json);
-    } catch (e: unknown) { setRepoErr(e instanceof Error ? e.message : "Failed"); }
-    finally { setLoadingRepos(false); }
-  }
+  // IDs of repos already added (matched by github URL)
+  const addedUrls = new Set(data.map((p) => p.github as string));
+
+  const addFromRepo = (repo: GhRepo) => {
+    const project = repoToProject(repo);
+    const newData = [...data, project];
+    onChange(newData);
+    setOpen(newData.length - 1); // open the new item for review
+    setShowPicker(false);        // switch to edit view
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const update = (i: number, key: string, val: any) => {
     const arr = [...data]; arr[i] = { ...arr[i], [key]: val }; onChange(arr);
   };
 
-  const applyRepo = (i: number, repo: GhRepo) => {
-    const arr = [...data];
-    arr[i] = {
-      ...arr[i],
-      title:   arr[i].title || repo.name.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
-      github:  repo.url,
-      live:    repo.homepage || arr[i].live || "",
-      tech:    arr[i].tech || (repo.language ? [repo.language] : []),
-    };
-    onChange(arr);
-    setPickerFor(null);
-  };
-
-  const add = () => {
-    onChange([...data, { title: "", subtitle: "", description: "", tech: [], tags: [], github: "", live: "" }]);
-    setOpen(data.length);
-  };
-
   const remove = (i: number) => { onChange(data.filter((_, idx) => idx !== i)); setOpen(null); };
 
   return (
-    <div className="space-y-3">
-      {data.length === 0 && <Empty label="projects" />}
-      {data.map((item, i) => (
-        <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-          <button type="button" className="w-full px-4 py-4 flex items-center justify-between gap-3 text-left"
-            onClick={() => setOpen(open === i ? null : i)}>
-            <div className="flex items-center gap-3 min-w-0">
-              <NumBadge n={i + 1} />
-              <span className="text-sm font-medium text-zinc-200 truncate">{(item.title as string) || "New project"}</span>
+    <div className="space-y-4">
+
+      {/* Toggle between picker and list */}
+      <div className="flex gap-2 bg-zinc-900 border border-zinc-800 rounded-xl p-1">
+        <button type="button" onClick={() => setShowPicker(true)}
+          className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${showPicker ? "bg-orange-500 text-white" : "text-zinc-400 hover:text-zinc-200"}`}>
+          + Add from GitHub
+        </button>
+        <button type="button" onClick={() => setShowPicker(false)}
+          className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-colors ${!showPicker ? "bg-zinc-700 text-white" : "text-zinc-400 hover:text-zinc-200"}`}>
+          Edit Added ({data.length})
+        </button>
+      </div>
+
+      {/* ── REPO PICKER ── */}
+      {showPicker && (
+        <div>
+          <p className="text-xs text-zinc-500 mb-3">Tap any repo to add it as a project. Fields are pre-filled automatically.</p>
+
+          {loadingRepos && (
+            <div className="flex items-center gap-3 py-8 justify-center text-zinc-500">
+              <span className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+              <span className="text-sm">Loading your GitHub repos…</span>
             </div>
-            <ChevronIcon open={open === i} />
-          </button>
+          )}
 
-          {open === i && (
-            <div className="px-4 pb-5 border-t border-zinc-800 pt-4 space-y-4">
-              {/* GitHub repo picker */}
-              <div className="bg-zinc-800/60 border border-zinc-700 rounded-xl p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-semibold text-zinc-400">🔗 Load from GitHub Repo</p>
-                  <button type="button" onClick={() => { fetchRepos(); setPickerFor(pickerFor === i ? null : i); }}
-                    className="text-xs text-orange-400 hover:text-orange-300 transition-colors font-medium">
-                    {pickerFor === i ? "Close" : "Pick a repo →"}
-                  </button>
-                </div>
+          {repoErr && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-sm">
+              ⚠️ {repoErr}
+              <p className="text-zinc-500 text-xs mt-1">Check that ADMIN_GITHUB_TOKEN is set on your server.</p>
+            </div>
+          )}
 
-                {pickerFor === i && (
-                  <div>
-                    {loadingRepos && <p className="text-zinc-500 text-xs py-2">Loading your repos…</p>}
-                    {repoErr     && <p className="text-red-400 text-xs">{repoErr}</p>}
-                    {repos && (
-                      <div className="max-h-48 overflow-y-auto space-y-1 mt-2">
-                        {repos.map((repo) => (
-                          <button type="button" key={repo.name} onClick={() => applyRepo(i, repo)}
-                            className="w-full text-left px-3 py-2.5 rounded-lg bg-zinc-900 hover:bg-zinc-700 transition-colors flex items-center justify-between gap-2">
-                            <div className="min-w-0">
-                              <p className="text-sm font-medium text-zinc-200 truncate">{repo.name}</p>
-                              {repo.description && <p className="text-xs text-zinc-500 truncate">{repo.description}</p>}
-                            </div>
-                            {repo.language && (
-                              <span className="text-xs text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded-full shrink-0">{repo.language}</span>
-                            )}
-                          </button>
-                        ))}
+          {repos && (
+            <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+              {repos.map((repo) => {
+                const added = addedUrls.has(repo.url);
+                return (
+                  <button
+                    type="button"
+                    key={repo.name}
+                    onClick={() => !added && addFromRepo(repo)}
+                    disabled={added}
+                    className={`w-full text-left p-4 rounded-xl border transition-all flex items-start justify-between gap-3 ${
+                      added
+                        ? "bg-zinc-900/50 border-zinc-800 opacity-50 cursor-not-allowed"
+                        : "bg-zinc-900 border-zinc-800 hover:border-orange-500/50 hover:bg-zinc-800 active:scale-[0.99]"
+                    }`}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <svg className="w-4 h-4 text-zinc-500 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                          <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-sm font-semibold text-zinc-100 truncate">{repo.name}</span>
                       </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <Field label="Project Name"          value={item.title as string}       onChange={(v) => update(i, "title", v)}       placeholder="Creative Cube" />
-              <Field label="One-line Description"  value={item.subtitle as string}    onChange={(v) => update(i, "subtitle", v)}    placeholder="Full-Stack SaaS Platform" />
-              <Field label="Full Description"      value={item.description as string} onChange={(v) => update(i, "description", v)} placeholder="What you built and why..." multiline />
-              <Field label="Technologies (comma-separated)" hint="e.g. Next.js, TypeScript, Docker"
-                value={(item.tech as string[] ?? []).join(", ")} onChange={(v) => update(i, "tech", v.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="Next.js, TypeScript, Docker" />
-              <Field label="Filter Tags (comma-separated)" hint="Keep short — these become filter buttons: Next.js, Docker"
-                value={(item.tags as string[] ?? []).join(", ")} onChange={(v) => update(i, "tags", v.split(",").map((s) => s.trim()).filter(Boolean))} placeholder="Next.js, Docker" />
-              <Field label="GitHub URL"  value={item.github as string} onChange={(v) => update(i, "github", v)} placeholder="https://github.com/username/repo" />
-              <Field label="Live URL (optional)" value={(item.live as string) ?? ""} onChange={(v) => update(i, "live", v)} placeholder="https://myproject.com" />
-
-              <button type="button" onClick={() => remove(i)} className="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm mt-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                Delete project
-              </button>
+                      {repo.description && <p className="text-xs text-zinc-400 truncate">{repo.description}</p>}
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {repo.language && (
+                        <span className="text-xs text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full">{repo.language}</span>
+                      )}
+                      {added
+                        ? <span className="text-xs text-green-400 font-medium">✓ Added</span>
+                        : <span className="text-xs text-orange-400 font-medium">+ Add</span>
+                      }
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
-      ))}
-      <AddBtn label="Add new project" onClick={add} />
+      )}
+
+      {/* ── ADDED PROJECTS LIST ── */}
+      {!showPicker && (
+        <div className="space-y-3">
+          {data.length === 0 && <Empty label="projects" />}
+          {data.map((item, i) => (
+            <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+              <button type="button" className="w-full px-4 py-4 flex items-center justify-between gap-3 text-left"
+                onClick={() => setOpen(open === i ? null : i)}>
+                <div className="flex items-center gap-3 min-w-0">
+                  <NumBadge n={i + 1} />
+                  <span className="text-sm font-medium text-zinc-200 truncate">{(item.title as string) || "New project"}</span>
+                </div>
+                <ChevronIcon open={open === i} />
+              </button>
+
+              {open === i && (
+                <div className="px-4 pb-5 border-t border-zinc-800 pt-4 space-y-4">
+                  <Field label="Project Name"         value={item.title as string}       onChange={(v) => update(i, "title", v)}       placeholder="Creative Cube" />
+                  <Field label="One-line Description" value={item.subtitle as string}    onChange={(v) => update(i, "subtitle", v)}    placeholder="Full-Stack SaaS Platform" />
+                  <Field label="Full Description"     value={item.description as string} onChange={(v) => update(i, "description", v)} placeholder="What you built and why..." multiline />
+                  <Field label="Technologies" hint="Comma-separated: Next.js, TypeScript, Docker"
+                    value={(item.tech as string[] ?? []).join(", ")} onChange={(v) => update(i, "tech", v.split(",").map((s) => s.trim()).filter(Boolean))} />
+                  <Field label="Filter Tags" hint="Short comma-separated list — becomes filter buttons on site"
+                    value={(item.tags as string[] ?? []).join(", ")} onChange={(v) => update(i, "tags", v.split(",").map((s) => s.trim()).filter(Boolean))} />
+                  <Field label="GitHub URL"           value={item.github as string}      onChange={(v) => update(i, "github", v)} />
+                  <Field label="Live URL (optional)"  value={(item.live as string) ?? ""} onChange={(v) => update(i, "live", v)} placeholder="https://myproject.com" />
+                  <button type="button" onClick={() => remove(i)} className="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    Remove project
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+          <button type="button" onClick={() => setShowPicker(true)}
+            className="w-full py-4 border-2 border-dashed border-zinc-700 hover:border-orange-500 rounded-xl text-zinc-400 hover:text-orange-400 transition-all text-sm font-semibold flex items-center justify-center gap-2">
+            + Add more from GitHub
+          </button>
+        </div>
+      )}
     </div>
   );
 }

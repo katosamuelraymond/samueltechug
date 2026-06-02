@@ -7,18 +7,79 @@ const geist = Geist({
   subsets: ["latin"],
 });
 
+const BASE_URL = "https://samueltechug.dev";
+
 export const metadata: Metadata = {
-  title: "Samuel Kato Raymond — Full Stack & Mobile Developer",
+  metadataBase: new URL(BASE_URL),
+
+  title: {
+    default: "Kato Samuel — Full Stack & Mobile Developer",
+    template: "%s | Kato Samuel",
+  },
+
   description:
-    "Full-stack and mobile developer based in Kampala, Uganda. Building production-grade web and mobile applications with Next.js, Laravel, Flutter, and more.",
-  keywords: ["full stack developer", "mobile developer", "Uganda", "Next.js", "Flutter", "Laravel"],
-  authors: [{ name: "Samuel Kato Raymond" }],
+    "Full-stack and mobile developer based in Kampala, Uganda. I build production-grade web apps, mobile apps, and DevOps infrastructure using Next.js, Laravel, Flutter, and Docker.",
+
+  keywords: [
+    "Kato Samuel",
+    "full stack developer Uganda",
+    "mobile developer Uganda",
+    "Next.js developer",
+    "Laravel developer",
+    "Flutter developer",
+    "web developer Kampala",
+    "software engineer Uganda",
+    "Docker DevOps",
+    "React developer",
+  ],
+
+  authors: [{ name: "Kato Samuel", url: BASE_URL }],
+  creator: "Kato Samuel",
+
+  // Canonical + alternate
+  alternates: {
+    canonical: BASE_URL,
+  },
+
+  // Open Graph — controls how link looks when shared on WhatsApp, Facebook, LinkedIn
   openGraph: {
-    title: "Samuel Kato Raymond — Full Stack & Mobile Developer",
-    description:
-      "Full-stack and mobile developer based in Kampala, Uganda. Specialising in scalable systems and end-to-end solutions.",
     type: "website",
+    url: BASE_URL,
+    siteName: "Kato Samuel Portfolio",
+    title: "Kato Samuel — Full Stack & Mobile Developer",
+    description:
+      "Building production-grade web and mobile applications from Kampala, Uganda. Next.js, Laravel, Flutter, Docker.",
     locale: "en_US",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Kato Samuel — Full Stack & Mobile Developer",
+      },
+    ],
+  },
+
+  // Twitter / X card — controls how link looks when shared on Twitter/X
+  twitter: {
+    card: "summary_large_image",
+    title: "Kato Samuel — Full Stack & Mobile Developer",
+    description:
+      "Building production-grade web and mobile applications from Kampala, Uganda.",
+    images: ["/og-image.png"],
+  },
+
+  // Prevent search engines from indexing admin routes
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 
