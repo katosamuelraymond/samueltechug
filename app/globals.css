@@ -7,6 +7,11 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Offset all section anchors so the sticky navbar doesn't cover them */
+section[id] {
+  scroll-margin-top: 72px;
+}
+
 body {
   font-family: var(--font-geist), system-ui, -apple-system, sans-serif;
 }
