@@ -1,0 +1,73 @@
+name: Deploy Portfolio
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set image tag
+        id: vars
+        run: |
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "repo=$REPO" >> $GITHUB_OUTPUT
+          if [ "${{ github.ref_name }}" == "main" ]; then
+            echo "tag=latest" >> $GITHUB_OUTPUT
+          else
+            echo "tag=staging" >> $GITHUB_OUTPUT
+          fi
+      - uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ steps.vars.outputs.repo }}:${{ steps.vars.outputs.tag }}
+      - name: Deploy to production
+        if: github.ref_name == 'main'
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            cd /opt/projects/samueltechug
+            docker compose pull
+            docker compose up -d --remove-orphans
+            sleep 35
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' $(docker compose ps -q app))
+            if [ "$STATUS" != "healthy" ]; then
+              docker compose down && exit 1
+            fi
+            docker image prune -f
+      - name: Deploy to staging
+        if: github.ref_name == 'staging'
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            cd /opt/projects/samueltechug-staging
+            docker compose pull
+            docker compose up -d --remove-orphans
+            sleep 35
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' $(docker compose ps -q app))
+            if [ "$STATUS" != "healthy" ]; then
+              docker compose down && exit 1
+            fi
+            docker image prune -f
