@@ -5,6 +5,11 @@ import { motion, useInView, AnimatePresence } from "framer-motion";
 import projectsData from "@/data/projects.json";
 const projects = projectsData as Array<{ title: string; subtitle: string; description: string; tech: string[]; tags: string[]; github: string; live?: string }>;
 
+function safeHref(url: string | undefined) {
+  if (!url) return url;
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
 const allTags = ["All", ...Array.from(new Set(projects.flatMap((p) => p.tags))).sort()];
 
 export default function Projects() {
@@ -95,7 +100,7 @@ export default function Projects() {
                   </a>
                   {project.live && (
                     <a
-                      href={project.live}
+                      href={safeHref(project.live)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1.5 text-sm text-zinc-400 hover:text-orange-400 transition-colors"

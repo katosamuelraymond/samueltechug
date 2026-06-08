@@ -310,6 +310,11 @@ function ResumeUploader() {
 ────────────────────────────────────────── */
 type GhRepo = { name: string; description: string; url: string; homepage: string; language: string };
 
+function normalizeUrl(url: string): string {
+  if (!url) return url;
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
+}
+
 // Map GitHub primary language → sensible tech/tag defaults
 function repoToProject(repo: GhRepo) {
   const title = repo.name.replace(/-|_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
@@ -329,7 +334,7 @@ function repoToProject(repo: GhRepo) {
     tech: defaults.tech,
     tags: defaults.tags,
     github: repo.url,
-    live: repo.homepage ?? "",
+    live: repo.homepage ? normalizeUrl(repo.homepage) : "",
   };
 }
 
@@ -365,7 +370,14 @@ function ProjectsEditor({ data, onChange }: { data: Record<string, unknown>[]; o
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const update = (i: number, key: string, val: any) => {
-    const arr = [...data]; arr[i] = { ...arr[i], [key]: val }; onChange(arr);
+    const v = key === "live" && val ? normalizeUrl(val) : val;
+    const arr = [...data]; arr[i] = { ...arr[i], [key]: v }; onChange(arr);
+  };
+
+  const move = (i: number, dir: -1 | 1) => {
+    const j = i + dir;
+    if (j < 0 || j >= data.length) return;
+    const arr = [...data]; [arr[i], arr[j]] = [arr[j], arr[i]]; onChange(arr);
   };
 
   const remove = (i: number) => { onChange(data.filter((_, idx) => idx !== i)); setOpen(null); };
@@ -458,7 +470,21 @@ function ProjectsEditor({ data, onChange }: { data: Record<string, unknown>[]; o
                   <NumBadge n={i + 1} />
                   <span className="text-sm font-medium text-zinc-200 truncate">{(item.title as string) || "New project"}</span>
                 </div>
-                <ChevronIcon open={open === i} />
+                <div className="flex items-center gap-1 shrink-0">
+                  <button type="button" title="Move up"
+                    onClick={(e) => { e.stopPropagation(); move(i, -1); }}
+                    disabled={i === 0}
+                    className="p-1.5 text-zinc-500 hover:text-orange-400 disabled:opacity-20 transition-colors">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
+                  </button>
+                  <button type="button" title="Move down"
+                    onClick={(e) => { e.stopPropagation(); move(i, 1); }}
+                    disabled={i === data.length - 1}
+                    className="p-1.5 text-zinc-500 hover:text-orange-400 disabled:opacity-20 transition-colors">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                  </button>
+                  <ChevronIcon open={open === i} />
+                </div>
               </button>
 
               {open === i && (
