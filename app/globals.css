@@ -3,6 +3,11 @@
 /* Tailwind v4 dark class variant */
 @custom-variant dark (&:where(.dark, .dark *));
 
+:root {
+  --ease-mercedes: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-cinematic: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -13,7 +18,7 @@ section[id] {
 
 body {
   font-family: var(--font-geist, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), color 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 ::selection {
@@ -49,4 +54,15 @@ body {
 
 .animate-marquee:hover {
   animation-play-state: paused;
+}
+
+/* Automotive luxury transitions */
+.transition-luxury {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  transition-duration: 500ms;
+}
+
+.ease-mercedes {
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
