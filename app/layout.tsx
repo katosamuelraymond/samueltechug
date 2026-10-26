@@ -30,13 +30,10 @@ export const metadata: Metadata = {
   authors: [{ name: "Kato Samuel", url: BASE_URL }],
   creator: "Kato Samuel",
 
-  // Canonical + alternate
   alternates: {
     canonical: BASE_URL,
   },
 
-  // Open Graph — controls how link looks when shared on WhatsApp, Facebook, LinkedIn
-  // Next.js auto-picks up app/opengraph-image.tsx as the og:image — no need to specify manually
   openGraph: {
     type: "website",
     url: BASE_URL,
@@ -47,7 +44,6 @@ export const metadata: Metadata = {
     locale: "en_US",
   },
 
-  // Twitter / X card
   twitter: {
     card: "summary_large_image",
     title: "Kato Samuel — Full Stack & Mobile Developer",
@@ -55,7 +51,6 @@ export const metadata: Metadata = {
       "Building production-grade web and mobile applications from Kampala, Uganda.",
   },
 
-  // Prevent search engines from indexing admin routes
   robots: {
     index: true,
     follow: true,
@@ -82,8 +77,7 @@ export default function RootLayout({
             __html: `
               try {
                 var t = localStorage.getItem('theme');
-                var d = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (t === 'light' || (!t && !d)) {
+                if (t === 'light') {
                   document.documentElement.classList.remove('dark');
                 } else {
                   document.documentElement.classList.add('dark');
@@ -93,7 +87,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="min-h-full bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 antialiased transition-colors duration-300">
+      <body className="min-h-full bg-zinc-950 text-zinc-100 antialiased selection:bg-orange-500/30 selection:text-white transition-colors duration-300">
         {children}
       </body>
     </html>

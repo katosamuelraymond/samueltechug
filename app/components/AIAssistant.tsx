@@ -88,14 +88,14 @@ export default function AIAssistant() {
 
   return (
     <>
-      {/* Clean Floating Trigger */}
+      {/* Floating Trigger */}
       <div className="fixed bottom-6 right-6 z-50">
         <button
           onClick={() => setOpen(!open)}
-          className="flex items-center gap-2 px-4 py-2.5 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer border border-zinc-700 dark:border-zinc-200 text-xs font-semibold"
+          className="flex items-center gap-2.5 px-4 py-2.5 bg-zinc-900 hover:bg-zinc-850 text-white rounded-full shadow-xl hover:shadow-orange-500/10 transition-all cursor-pointer border border-zinc-700/80 hover:border-orange-500/50 text-xs font-semibold"
         >
-          <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
-          <span>{open ? "Close Chat" : "Ask Samuel's AI"}</span>
+          <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse" />
+          <span>{open ? "Close Assistant" : "Ask Samuel's AI ✨"}</span>
         </button>
       </div>
 
@@ -106,20 +106,20 @@ export default function AIAssistant() {
             initial={{ opacity: 0, y: 15, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 15, scale: 0.98 }}
-            transition={{ duration: 0.15 }}
-            className="fixed bottom-20 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-[390px] max-h-[580px] h-[75vh] bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
+            transition={{ duration: 0.2 }}
+            className="fixed bottom-20 right-4 sm:right-6 z-50 w-[calc(100vw-2rem)] sm:w-[390px] max-h-[580px] h-[75vh] bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="p-3.5 sm:p-4 bg-zinc-50 dark:bg-zinc-900/60 border-b border-zinc-200 dark:border-zinc-800 flex items-center justify-between">
+            <div className="p-3.5 sm:p-4 bg-zinc-900/90 border-b border-zinc-800 flex items-center justify-between">
               <div>
-                <h3 className="text-xs font-bold text-zinc-900 dark:text-white flex items-center gap-1.5">
-                  Samuel's Portfolio AI
+                <h3 className="text-xs font-bold text-white flex items-center gap-1.5">
+                  <span className="text-orange-500">●</span> Samuel&apos;s Portfolio AI
                 </h3>
-                <p className="text-[11px] text-zinc-500">Knows all projects &amp; technical experience</p>
+                <p className="text-[11px] text-zinc-400">Knows all projects &amp; technical experience</p>
               </div>
               <button
                 onClick={() => setOpen(false)}
-                className="text-zinc-400 hover:text-zinc-900 dark:hover:text-white p-1 rounded-lg text-xs cursor-pointer"
+                className="text-zinc-400 hover:text-white p-1 rounded-lg text-xs cursor-pointer"
                 title="Close"
               >
                 ✕
@@ -127,7 +127,7 @@ export default function AIAssistant() {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin">
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {messages.map((m) => (
                 <div
                   key={m.id}
@@ -136,21 +136,21 @@ export default function AIAssistant() {
                   <div
                     className={`max-w-[85%] rounded-2xl px-3.5 py-2.5 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap ${
                       m.sender === "user"
-                        ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 rounded-br-none"
-                        : "bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 rounded-bl-none border border-zinc-200 dark:border-zinc-800"
+                        ? "bg-orange-500 text-white rounded-br-none shadow-md shadow-orange-500/20"
+                        : "bg-zinc-900 text-zinc-200 rounded-bl-none border border-zinc-800"
                     }`}
                   >
                     {m.text}
                   </div>
-                  <span className="text-[10px] text-zinc-400 mt-1 px-1 font-mono">{m.time}</span>
+                  <span className="text-[10px] text-zinc-500 mt-1 px-1 font-mono">{m.time}</span>
                 </div>
               ))}
 
               {loading && (
-                <div className="flex items-center gap-1.5 text-zinc-400 text-xs py-2 px-3 bg-zinc-100 dark:bg-zinc-900 rounded-xl w-fit">
-                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce"></span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce [animation-delay:0.2s]"></span>
-                  <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce [animation-delay:0.4s]"></span>
+                <div className="flex items-center gap-1.5 text-zinc-400 text-xs py-2 px-3 bg-zinc-900 rounded-xl w-fit border border-zinc-800">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-bounce"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-bounce [animation-delay:0.2s]"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-bounce [animation-delay:0.4s]"></span>
                 </div>
               )}
               <div ref={messagesEndRef} />
@@ -158,12 +158,12 @@ export default function AIAssistant() {
 
             {/* Quick Prompts */}
             {messages.length <= 2 && (
-              <div className="px-3 py-2 bg-zinc-50 dark:bg-zinc-900/40 border-t border-zinc-100 dark:border-zinc-800 flex flex-wrap gap-1">
+              <div className="px-3 py-2 bg-zinc-900/60 border-t border-zinc-800/80 flex flex-wrap gap-1">
                 {INITIAL_PROMPTS.map((prompt) => (
                   <button
                     key={prompt}
                     onClick={() => sendMessage(prompt)}
-                    className="text-[10px] px-2.5 py-1 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white rounded-full border border-zinc-200 dark:border-zinc-700 transition-colors cursor-pointer text-left"
+                    className="text-[10px] px-2.5 py-1 bg-zinc-900 text-zinc-300 hover:text-white hover:bg-zinc-800 rounded-full border border-zinc-800 transition-colors cursor-pointer text-left"
                   >
                     {prompt}
                   </button>
@@ -177,19 +177,19 @@ export default function AIAssistant() {
                 e.preventDefault();
                 sendMessage();
               }}
-              className="p-3 bg-white dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 flex items-center gap-2"
+              className="p-3 bg-zinc-950 border-t border-zinc-800 flex items-center gap-2"
             >
               <input
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Ask about Samuel's work..."
-                className="flex-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:border-zinc-400 dark:focus:border-zinc-600 transition-colors"
+                className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500 transition-colors"
               />
               <button
                 type="submit"
                 disabled={loading || !input.trim()}
-                className="px-3 py-2 bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 disabled:opacity-40 rounded-lg text-xs font-semibold cursor-pointer"
+                className="px-4 py-2 bg-orange-500 hover:bg-orange-400 text-white disabled:opacity-40 rounded-lg text-xs font-semibold cursor-pointer transition-colors shadow-sm shadow-orange-500/20"
               >
                 Send
               </button>

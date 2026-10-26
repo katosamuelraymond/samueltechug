@@ -29,8 +29,8 @@ export default function Contact() {
     }
   };
 
-  const inputClass    = "w-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 rounded-lg px-4 py-3 text-zinc-900 dark:text-zinc-100 placeholder-zinc-400 dark:placeholder-zinc-600 focus:outline-none focus:border-orange-500 transition-colors text-sm";
-  const labelClass    = "block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2";
+  const inputClass = "w-full bg-zinc-900 border border-zinc-800 rounded-lg px-4 py-3 text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500 transition-colors text-sm";
+  const labelClass = "block text-sm font-medium text-zinc-300 mb-2";
 
   const contactItems = [
     {
@@ -48,24 +48,24 @@ export default function Contact() {
   ];
 
   return (
-    <section id="contact" className="py-24 bg-zinc-100 dark:bg-zinc-950">
+    <section id="contact" className="py-24 bg-zinc-950 border-t border-zinc-850">
       <div className="max-w-4xl mx-auto px-4 sm:px-6" ref={ref}>
         <motion.div initial={{ opacity: 0, y: 30 }} animate={inView ? { opacity: 1, y: 0 } : {}} transition={{ duration: 0.6 }} className="text-center mb-16">
           <p className="text-orange-400 font-mono text-sm tracking-widest uppercase mb-3">Say hello</p>
-          <h2 className="text-3xl sm:text-4xl font-bold text-zinc-900 dark:text-white">Get In Touch</h2>
-          <p className="text-zinc-500 dark:text-zinc-400 mt-4 max-w-xl mx-auto">Have a project in mind? I&apos;d love to hear from you.</p>
+          <h2 className="text-3xl sm:text-4xl font-bold text-white">Get In Touch</h2>
+          <p className="text-zinc-400 mt-4 max-w-xl mx-auto">Have a project in mind? I&apos;d love to hear from you.</p>
         </motion.div>
 
         <div className="grid md:grid-cols-5 gap-12">
           <motion.div initial={{ opacity: 0, x: -30 }} animate={inView ? { opacity: 1, x: 0 } : {}} transition={{ duration: 0.6, delay: 0.1 }} className="md:col-span-2 space-y-6">
             {contactItems.map((item) => (
               <div key={item.label} className="flex items-start gap-4">
-                <div className="mt-0.5 w-10 h-10 flex-shrink-0 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-500">{item.icon}</div>
+                <div className="mt-0.5 w-10 h-10 flex-shrink-0 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400">{item.icon}</div>
                 <div>
                   <p className="text-xs text-zinc-500 uppercase tracking-wide font-medium mb-1">{item.label}</p>
                   {item.href
-                    ? <a href={item.href} target="_blank" rel="noopener noreferrer" className="text-zinc-700 dark:text-zinc-300 hover:text-orange-500 dark:hover:text-orange-400 transition-colors text-sm break-all">{item.value}</a>
-                    : <p className="text-zinc-700 dark:text-zinc-300 text-sm">{item.value}</p>}
+                    ? <a href={item.href} target="_blank" rel="noopener noreferrer" className="text-zinc-300 hover:text-orange-400 transition-colors text-sm break-all">{item.value}</a>
+                    : <p className="text-zinc-300 text-sm">{item.value}</p>}
                 </div>
               </div>
             ))}
@@ -77,8 +77,8 @@ export default function Contact() {
                 <div className="w-16 h-16 rounded-full bg-orange-500/10 border border-orange-500/30 flex items-center justify-center mb-4">
                   <svg className="w-8 h-8 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                 </div>
-                <h3 className="text-xl font-bold text-zinc-900 dark:text-white mb-2">Message Sent!</h3>
-                <p className="text-zinc-500 dark:text-zinc-400">Thanks for reaching out. I&apos;ll get back to you soon.</p>
+                <h3 className="text-xl font-bold text-white mb-2">Message Sent!</h3>
+                <p className="text-zinc-400">Thanks for reaching out. I&apos;ll get back to you soon.</p>
               </motion.div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
@@ -89,7 +89,7 @@ export default function Contact() {
                 <div><label className={labelClass}>Message</label><textarea required rows={6} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} placeholder="Tell me about your project..." className={`${inputClass} resize-none`} /></div>
                 {status === "error" && <p className="text-red-400 text-sm">{errMsg}</p>}
                 <motion.button type="submit" disabled={status === "sending"} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                  className="w-full py-3.5 bg-orange-500 hover:bg-orange-400 disabled:opacity-60 text-white font-semibold rounded-lg transition-colors text-sm flex items-center justify-center gap-2">
+                  className="w-full py-3.5 bg-orange-500 hover:bg-orange-400 disabled:opacity-60 text-white font-semibold rounded-lg transition-colors text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 cursor-pointer">
                   {status === "sending" ? (<><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Sending...</>) : "Send Message"}
                 </motion.button>
               </form>
