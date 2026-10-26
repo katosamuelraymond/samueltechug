@@ -1,11 +1,5 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
 import "./globals.css";
-
-const geist = Geist({
-  variable: "--font-geist",
-  subsets: ["latin"],
-});
 
 const BASE_URL = "https://samueltechug.dev";
 
@@ -81,7 +75,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geist.variable} dark`} suppressHydrationWarning>
+    <html lang="en" className="dark font-sans" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{

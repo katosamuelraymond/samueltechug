@@ -9,6 +9,7 @@ import Projects from "./components/Projects";
 import Testimonials from "./components/Testimonials";
 import Contact from "./components/Contact";
 import Footer from "./components/Footer";
+import AIAssistant from "./components/AIAssistant";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -52,6 +53,7 @@ export default function Home() {
         <Contact />
       </main>
       <Footer />
+      <AIAssistant />
     </>
   );
 }

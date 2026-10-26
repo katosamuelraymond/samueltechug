@@ -3,6 +3,14 @@
     "title": "Creative Cube",
     "subtitle": "Full-Stack SaaS E-Commerce Platform",
     "description": "Architected a production-ready SaaS furniture e-commerce platform with server-component architecture, structured Prisma database migrations, Cloudinary media management, and automated CI/CD deployment.",
+    "category": "Full-Stack Web",
+    "featured": true,
+    "highlights": [
+      "Server Components with high-performance Next.js streaming",
+      "Prisma ORM schema migrations on PostgreSQL",
+      "Cloudinary media optimization and asset pipeline",
+      "Multi-container Docker architecture with automated CI/CD"
+    ],
     "tech": [
       "Next.js",
       "TypeScript",
@@ -21,25 +29,17 @@
     "live": "https://next.conquerer.org"
   },
   {
-    "title": "School System",
-    "subtitle": "Enterprise School Management & ERP",
-    "description": "Enterprise school management and ERP platform covering academics, finance, staff management, and administration. Built for multiple schools with role-based access for admins, teachers, students, and parents.",
-    "tech": [
-      "Laravel",
-      "MySQL",
-      "Blade",
-      "Tailwind CSS",
-      "RBAC"
-    ],
-    "tags": [
-      "Laravel"
-    ],
-    "github": "https://github.com/katosamuelraymond/school-system"
-  },
-  {
     "title": "POS System",
-    "subtitle": "Enterprise Point-of-Sale and ERP",
+    "subtitle": "Enterprise Point-of-Sale & Multi-Branch ERP",
     "description": "Built a full-featured POS and ERP platform with multi-branch support, real-time inventory tracking, financial reporting, and fine-grained role-based access control for multiple user roles.",
+    "category": "Enterprise Systems",
+    "featured": true,
+    "highlights": [
+      "Multi-branch inventory reconciliation in real time",
+      "Fine-grained RBAC with Spatie Permissions and Laravel Sanctum",
+      "Comprehensive daily sales and financial audit trails",
+      "Interactive React sales terminal with offline barcode scanning"
+    ],
     "tech": [
       "Laravel",
       "React",
@@ -57,23 +57,17 @@
     "live": "https://pos-staging.conquerer.org"
   },
   {
-    "title": "Edusoko",
-    "subtitle": "Education Marketplace Mobile App",
-    "description": "A Flutter mobile application for an education marketplace connecting students, tutors, and institutions. Features course browsing, booking, and in-app communication.",
-    "tech": [
-      "Flutter",
-      "Dart"
-    ],
-    "tags": [
-      "Flutter",
-      "Dart"
-    ],
-    "github": "https://github.com/katosamuelraymond/edusoko-app"
-  },
-  {
     "title": "AgroLink",
     "subtitle": "Agricultural Supply Chain Mobile App",
     "description": "Engineered an offline-first Flutter application connecting farmers, buyers, and transporters in low connectivity rural environments. Designed to reduce post-harvest losses and improve agricultural trade efficiency across Uganda.",
+    "category": "Mobile App",
+    "featured": true,
+    "highlights": [
+      "Offline-first local caching engine built with Hive",
+      "Background data synchronization when network connectivity restores",
+      "Multilingual UI optimized for low-end Android smartphones",
+      "Transparent pricing index across Ugandan agricultural districts"
+    ],
     "tech": [
       "Flutter",
       "Dart",
@@ -88,8 +82,16 @@
   },
   {
     "title": "Fintrack",
-    "subtitle": "Personal Finance Mobile Application",
+    "subtitle": "Personal Finance & Budgeting Mobile App",
     "description": "Built a cross-platform mobile finance manager with income and expense tracking, budget goal setting, and visual analytics dashboards. Integrated Supabase for real-time data synchronisation and secure multi-device authentication.",
+    "category": "Mobile App",
+    "featured": true,
+    "highlights": [
+      "Real-time reactive state management with Flutter & Supabase",
+      "Visual spending breakdowns and interactive monthly analytics charts",
+      "Biometric app lock and encrypted local vault",
+      "Multi-currency support and automated recurring transaction alerts"
+    ],
     "tech": [
       "Flutter",
       "Dart",
@@ -103,9 +105,60 @@
     "github": "https://github.com/katosamuelraymond/Fintrack"
   },
   {
+    "title": "School System",
+    "subtitle": "Enterprise School Management & ERP",
+    "description": "Enterprise school management and ERP platform covering academics, finance, staff management, and administration. Built for multiple schools with role-based access for admins, teachers, students, and parents.",
+    "category": "Enterprise Systems",
+    "featured": false,
+    "highlights": [
+      "Complete grading and report card generation engine",
+      "Fee payment collection tracking with receipt printing",
+      "Teacher timetable scheduling and student attendance metrics"
+    ],
+    "tech": [
+      "Laravel",
+      "MySQL",
+      "Blade",
+      "Tailwind CSS",
+      "RBAC"
+    ],
+    "tags": [
+      "Laravel"
+    ],
+    "github": "https://github.com/katosamuelraymond/school-system"
+  },
+  {
+    "title": "Edusoko",
+    "subtitle": "Education Marketplace Mobile App",
+    "description": "A Flutter mobile application for an education marketplace connecting students, tutors, and institutions. Features course browsing, booking, and in-app communication.",
+    "category": "Mobile App",
+    "featured": false,
+    "highlights": [
+      "Tutor discovery and subject rating system",
+      "Session booking calendar and appointment management",
+      "Clean Material 3 UI design"
+    ],
+    "tech": [
+      "Flutter",
+      "Dart"
+    ],
+    "tags": [
+      "Flutter",
+      "Dart"
+    ],
+    "github": "https://github.com/katosamuelraymond/edusoko-app"
+  },
+  {
     "title": "Hermus Global Hauls",
     "subtitle": "Logistics & Haulage Mobile App",
     "description": "Mobile application for a global haulage and logistics company, providing shipment tracking, booking, and delivery management for customers and drivers.",
+    "category": "Mobile App",
+    "featured": false,
+    "highlights": [
+      "Waybill generation and live cargo status tracking",
+      "Driver dispatch view with destination checkpoints",
+      "Push notifications for shipment status updates"
+    ],
     "tech": [
       "Flutter",
       "Dart"
@@ -120,6 +173,13 @@
     "title": "Savings SACCO",
     "subtitle": "SACCO Management System",
     "description": "Designed a full SACCO platform for member registration, savings, loan applications, repayment schedules, and automated financial statements. Replaced entirely manual bookkeeping with automated workflows.",
+    "category": "Enterprise Systems",
+    "featured": false,
+    "highlights": [
+      "Automated loan amortization and penalty calculator",
+      "Member dividend calculations based on annual contribution shares",
+      "Exportable financial ledger audits"
+    ],
     "tech": [
       "Laravel",
       "MySQL",
@@ -134,6 +194,13 @@
     "title": "Capital Investment Club",
     "subtitle": "Web-Based Financial Management System",
     "description": "Web-based financial management system built specifically for Capital Investment Clubs in Uganda, handling member contributions, dividends, and financial reporting.",
+    "category": "Enterprise Systems",
+    "featured": false,
+    "highlights": [
+      "Monthly share contributions tracking",
+      "Club investment portfolio returns dashboard",
+      "Secure member portal with PDF statement generation"
+    ],
     "tech": [
       "Laravel",
       "MySQL",
@@ -145,37 +212,17 @@
     "github": "https://github.com/katosamuelraymond/saving-sacco"
   },
   {
-    "title": "E-Commerce Platform",
-    "subtitle": "PHP E-Commerce Store",
-    "description": "E-commerce platform with product listings, shopping cart, wishlist, and full admin inventory management. Built with vanilla PHP and MySQL.",
-    "tech": [
-      "PHP",
-      "MySQL",
-      "JavaScript"
-    ],
-    "tags": [
-      "PHP"
-    ],
-    "github": "https://github.com/katosamuelraymond/e-commerce"
-  },
-  {
-    "title": "E-Learning Platform",
-    "subtitle": "Learning Management System",
-    "description": "Developed a comprehensive LMS supporting course creation, online examinations, assignment submission, and student performance tracking.",
-    "tech": [
-      "Laravel",
-      "MySQL",
-      "Tailwind CSS"
-    ],
-    "tags": [
-      "Laravel"
-    ],
-    "github": "https://github.com/katosamuelraymond/elearning-platform"
-  },
-  {
     "title": "Zila Insurance",
-    "subtitle": "Corporate CMS Platform",
+    "subtitle": "Corporate CMS & Client Portal",
     "description": "Built a corporate website with integrated CMS enabling non-technical staff to manage pages, publish articles, and update content independently. React frontend with Inertia.js for seamless SPA experience.",
+    "category": "CMS & Platforms",
+    "featured": true,
+    "highlights": [
+      "Inertia.js SPA architecture powered by Laravel 11",
+      "Intuitive CMS for non-technical team members",
+      "SEO-optimized insurance package landing pages",
+      "Instant quote request lead management"
+    ],
     "tech": [
       "Laravel 11",
       "React",
@@ -189,9 +236,57 @@
     "live": "https://zimltd.com"
   },
   {
+    "title": "E-Learning Platform",
+    "subtitle": "Learning Management System",
+    "description": "Developed a comprehensive LMS supporting course creation, online examinations, assignment submission, and student performance tracking.",
+    "category": "Full-Stack Web",
+    "featured": false,
+    "highlights": [
+      "Timed examination module with automated grading",
+      "Assignment submission portal with instructor feedback",
+      "Course progress tracking and certificate issuance"
+    ],
+    "tech": [
+      "Laravel",
+      "MySQL",
+      "Tailwind CSS"
+    ],
+    "tags": [
+      "Laravel"
+    ],
+    "github": "https://github.com/katosamuelraymond/elearning-platform"
+  },
+  {
+    "title": "E-Commerce Platform",
+    "subtitle": "Custom E-Commerce Store",
+    "description": "E-commerce platform with product listings, shopping cart, wishlist, and full admin inventory management. Built with vanilla PHP and MySQL.",
+    "category": "Full-Stack Web",
+    "featured": false,
+    "highlights": [
+      "Cart and checkout workflows with order status emails",
+      "Admin dashboard with stock management and order fulfilment"
+    ],
+    "tech": [
+      "PHP",
+      "MySQL",
+      "JavaScript"
+    ],
+    "tags": [
+      "PHP"
+    ],
+    "github": "https://github.com/katosamuelraymond/e-commerce"
+  },
+  {
     "title": "Desishub Candidate Platform",
     "subtitle": "Job Candidate Management Platform",
     "description": "A candidate management platform for tracking job applicants through the hiring pipeline, with admin controls for managing applications, statuses, and communications.",
+    "category": "Enterprise Systems",
+    "featured": false,
+    "highlights": [
+      "Visual applicant tracking pipeline (Applied, Interview, Offered)",
+      "Resume parsing and candidate profile review",
+      "Automated interview invitation email dispatch"
+    ],
     "tech": [
       "Laravel",
       "MySQL",
