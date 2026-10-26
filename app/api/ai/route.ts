@@ -3,6 +3,24 @@ import { cookies } from "next/headers";
 import fs from "fs/promises";
 import path from "path";
 
+// Helper to get GitHub token from env or data/settings.json
+async function getGitHubToken(): Promise<string> {
+  if (process.env.ADMIN_GITHUB_TOKEN && process.env.ADMIN_GITHUB_TOKEN.trim()) {
+    return process.env.ADMIN_GITHUB_TOKEN.trim();
+  }
+  try {
+    const settingsPath = path.join(process.cwd(), "data", "settings.json");
+    const raw = await fs.readFile(settingsPath, "utf-8");
+    const json = JSON.parse(raw);
+    if (json.githubToken && typeof json.githubToken === "string") {
+      return json.githubToken.trim();
+    }
+  } catch {
+    // ignore
+  }
+  return "";
+}
+
 // Load data files for AI knowledge base
 async function getKnowledgeBase() {
   const cwd = process.cwd();
@@ -28,7 +46,7 @@ async function isAuthed() {
 // Fallback intelligent answer engine if no external LLM API key is set
 function answerVisitorQuery(query: string, kb: Awaited<ReturnType<typeof getKnowledgeBase>>): string {
   const q = query.toLowerCase();
-  const { profile, projects, experience } = kb;
+  const { profile, projects } = kb;
 
   // Flutter / Mobile
   if (q.includes("flutter") || q.includes("mobile") || q.includes("android") || q.includes("ios") || q.includes("dart")) {
@@ -57,7 +75,6 @@ function answerVisitorQuery(query: string, kb: Awaited<ReturnType<typeof getKnow
 
   // Creative Cube
   if (q.includes("creative cube")) {
-    const p = projects.find((x: { title: string }) => /creative cube/i.test(x.title));
     return `**Creative Cube** is one of Samuel's flagship projects. It is a full-stack SaaS furniture e-commerce platform built with:\n• **Tech Stack:** Next.js, TypeScript, Prisma, PostgreSQL, Cloudinary, Tailwind CSS, Docker.\n• **Architecture:** Leverages Next.js Server Components, structured database migrations with Prisma, automated media transformation via Cloudinary, and containerized Docker deployment.`;
   }
 
@@ -76,30 +93,76 @@ function answerVisitorQuery(query: string, kb: Awaited<ReturnType<typeof getKnow
 }
 
 // AI Project generator assistant
-async function generateProjectDraft(promptText: string, repoUrl?: string) {
-  let defaultTitle = "New Project";
-  let description = promptText || "Production-grade application designed for high performance and scalability.";
-  let tech: string[] = ["TypeScript", "Next.js", "Tailwind CSS"];
-  let tags: string[] = ["Next.js", "TypeScript"];
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function generateProjectDraft(promptText: string, repoUrl?: string, repoData?: any) {
+  let defaultTitle = repoData?.name
+    ? repoData.name.replace(/[-_]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())
+    : "New Project";
+  let description = repoData?.description || promptText || "Production-grade application designed for high performance, reliability, and modern user experience.";
+  let tech: string[] = [];
+  let tags: string[] = [];
   let category = "Full-Stack Web";
-  let github = repoUrl || "https://github.com/katosamuelraymond";
-  let live = "";
+  let github = repoData?.url || repoUrl || "https://github.com/katosamuelraymond";
+  let live = repoData?.homepage || "";
   let highlights = [
-    "Modular architecture with reusable design components",
-    "Optimized data querying and state synchronization",
-    "Responsive interface with accessible design patterns",
+    "High-performance architecture with clean separation of concerns",
+    "Comprehensive data validation and error boundary protection",
+    "Optimized for fast rendering and fluid interactive states",
   ];
 
-  // If user provided a GitHub URL, try to fetch repo metadata
-  if (repoUrl && repoUrl.includes("github.com/")) {
+  const token = await getGitHubToken();
+
+  // If repoUrl or repoData is given, analyze deeper
+  if (repoData) {
+    if (repoData.language) {
+      if (repoData.language === "Dart") {
+        category = "Mobile App";
+        tech = ["Flutter", "Dart", "State Management", "REST APIs"];
+        tags = ["Flutter", "Dart"];
+        highlights = [
+          "Cross-platform 60fps mobile architecture built with Flutter & Dart",
+          "Offline-first local caching with background cloud sync",
+          "Clean responsive UI with native gesture interactions",
+        ];
+      } else if (repoData.language === "PHP" || repoData.language === "Blade") {
+        category = "Enterprise Systems";
+        tech = ["Laravel", "PHP", "MySQL", "Tailwind CSS"];
+        tags = ["Laravel", "PHP"];
+        highlights = [
+          "Scalable relational database schema with indexed queries and migrations",
+          "Role-based access control (RBAC) and enterprise authorization policies",
+          "Automated transactional workflows and audit logging",
+        ];
+      } else if (repoData.language === "TypeScript" || repoData.language === "JavaScript") {
+        category = "Full-Stack Web";
+        tech = ["Next.js", "TypeScript", "Tailwind CSS", "React"];
+        tags = ["Next.js", "TypeScript"];
+        highlights = [
+          "Modern App Router architecture with streaming React Server Components",
+          "End-to-end type safety with TypeScript and Zod validation",
+          "Containerized production deployment workflow with automated CI/CD",
+        ];
+      } else if (repoData.language === "Python") {
+        category = "AI & Backend";
+        tech = ["Python", "FastAPI", "PostgreSQL", "Docker"];
+        tags = ["Python", "FastAPI"];
+      }
+    }
+
+    if (Array.isArray(repoData.topics) && repoData.topics.length > 0) {
+      const topicTags = repoData.topics.map((t: string) => t.charAt(0).toUpperCase() + t.slice(1));
+      tags = Array.from(new Set([...tags, ...topicTags])).slice(0, 4);
+      tech = Array.from(new Set([...tech, ...topicTags])).slice(0, 6);
+    }
+  } else if (repoUrl && repoUrl.includes("github.com/")) {
     try {
       const match = repoUrl.match(/github\.com\/([^/]+)\/([^/?#]+)/);
       if (match) {
         const [, owner, repo] = match;
-        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
-          headers: { "User-Agent": "SamuelTechUg-AI" },
-          cache: "no-store",
-        });
+        const headers: Record<string, string> = { "User-Agent": "SamuelTechUg-AI" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, { headers, cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
           defaultTitle = data.name.replace(/[-_]/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase());
@@ -112,17 +175,17 @@ async function generateProjectDraft(promptText: string, repoUrl?: string) {
             tech = ["Flutter", "Dart", "State Management"];
             tags = ["Flutter", "Dart"];
             highlights = [
-              "Cross-platform mobile application architecture",
-              "Smooth 60fps UI animations and responsive layout",
-              "Robust error handling and offline data resilience",
+              "Cross-platform 60fps mobile architecture built with Flutter & Dart",
+              "Offline-first local caching with background cloud sync",
+              "Clean responsive UI with native gesture interactions",
             ];
           } else if (data.language === "PHP" || data.language === "Blade") {
             category = "Enterprise Systems";
             tech = ["Laravel", "PHP", "MySQL", "Tailwind CSS"];
-            tags = ["Laravel"];
+            tags = ["Laravel", "PHP"];
             highlights = [
-              "Enterprise relational database schema with indexed queries",
-              "Role-based access control and secure authentication",
+              "Scalable relational database schema with indexed queries and migrations",
+              "Role-based access control (RBAC) and enterprise authorization policies",
               "Automated transactional workflows and audit logging",
             ];
           } else if (data.language === "TypeScript" || data.language === "JavaScript") {
@@ -130,9 +193,9 @@ async function generateProjectDraft(promptText: string, repoUrl?: string) {
             tech = ["Next.js", "TypeScript", "Tailwind CSS", "React"];
             tags = ["Next.js", "TypeScript"];
             highlights = [
-              "Server-side rendering and streaming server components",
-              "Full-stack TypeScript typesafety across client and server",
-              "Production deployment configuration with Docker",
+              "Modern App Router architecture with streaming React Server Components",
+              "End-to-end type safety with TypeScript and Zod validation",
+              "Containerized production deployment workflow with automated CI/CD",
             ];
           }
         }
@@ -147,21 +210,42 @@ async function generateProjectDraft(promptText: string, repoUrl?: string) {
       category = "Mobile App";
       tech = ["Flutter", "Dart", "Supabase", "Mobile Architecture"];
       tags = ["Flutter", "Dart"];
-    } else if (textLower.includes("laravel") || textLower.includes("php") || textLower.includes("sacco") || textLower.includes("pos")) {
+      highlights = [
+        "Cross-platform 60fps mobile UI designed with Flutter & Dart",
+        "Offline-first data layer with SQLite/Hive caching",
+        "Clean BLoC / Provider state management architecture",
+      ];
+    } else if (textLower.includes("laravel") || textLower.includes("php") || textLower.includes("sacco") || textLower.includes("pos") || textLower.includes("erp")) {
       category = "Enterprise Systems";
-      tech = ["Laravel", "MySQL", "Tailwind CSS", "RBAC"];
-      tags = ["Laravel"];
+      tech = ["Laravel", "MySQL", "Tailwind CSS", "RBAC", "PHP"];
+      tags = ["Laravel", "PHP"];
+      highlights = [
+        "Multi-branch enterprise ERP schema with ACID transactions",
+        "Granular RBAC authorization with audit trails",
+        "Automated PDF reporting and Excel export integrations",
+      ];
     } else if (textLower.includes("next") || textLower.includes("react") || textLower.includes("saas") || textLower.includes("ecommerce")) {
       category = "Full-Stack Web";
       tech = ["Next.js", "TypeScript", "Tailwind CSS", "PostgreSQL", "Docker"];
       tags = ["Next.js", "TypeScript"];
+      highlights = [
+        "Next.js App Router with Server Actions and ISR caching",
+        "Prisma ORM schema with PostgreSQL relational indexing",
+        "Automated CI/CD containerization with Docker & GitHub Actions",
+      ];
     }
 
-    // Try extracting title from quotation marks or first words
     const titleMatch = promptText.match(/["']([^"']+)["']/) || promptText.match(/^([A-Za-z0-9 ]{3,25})/);
     if (titleMatch && titleMatch[1]) {
       defaultTitle = titleMatch[1].trim();
     }
+  }
+
+  if (tech.length === 0) {
+    tech = ["TypeScript", "Next.js", "Tailwind CSS"];
+  }
+  if (tags.length === 0) {
+    tags = [tech[0] || "Next.js", tech[1] || "TypeScript"];
   }
 
   const draft = {
@@ -179,7 +263,7 @@ async function generateProjectDraft(promptText: string, repoUrl?: string) {
 
   return {
     draft,
-    inquiryMessage: `I've analyzed your project and drafted the showcase entry for **"${draft.title}"**.\n\nPlease review the details below. Would you like me to upload and publish this project to your live portfolio?`,
+    inquiryMessage: `I've analyzed the repository **"${draft.title}"** and created an executive showcase draft.\n\nReview the details below. Would you like me to upload and publish this project to your live portfolio?`,
   };
 }
 
@@ -197,8 +281,6 @@ export async function POST(req: NextRequest) {
 
       const kb = await getKnowledgeBase();
 
-      // If an LLM API key like GEMINI_API_KEY is available, we could call Gemini API;
-      // otherwise, use the zero-latency, reliable knowledge retrieval engine:
       const geminiApiKey = process.env.GEMINI_API_KEY;
       if (geminiApiKey) {
         try {
@@ -243,8 +325,8 @@ User question: "${message}"`;
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
 
-      const { prompt, repoUrl } = body;
-      const result = await generateProjectDraft(prompt || "", repoUrl);
+      const { prompt, repoUrl, repoData } = body;
+      const result = await generateProjectDraft(prompt || "", repoUrl, repoData);
       return NextResponse.json(result);
     }
 
@@ -263,7 +345,7 @@ User question: "${message}"`;
       const raw = await fs.readFile(projectsPath, "utf-8");
       const projects = JSON.parse(raw);
 
-      // Prepend the new project so it appears first
+      // Prepend the new project so it appears first in the showcase
       const updatedProjects = [project, ...projects.filter((p: { title: string }) => p.title.toLowerCase() !== project.title.toLowerCase())];
 
       await fs.writeFile(projectsPath, JSON.stringify(updatedProjects, null, 2) + "\n", "utf-8");

@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 
-type Section = "ai_copilot" | "projects" | "profile" | "experience" | "testimonials" | "services" | "resume";
+type Section = "ai_publisher" | "projects" | "profile" | "experience" | "testimonials" | "services" | "resume";
 
 const TABS: { id: Section; label: string; icon: string; desc: string }[] = [
-  { id: "ai_copilot",   label: "AI Co-Pilot",   icon: "✨", desc: "AI project generator & publisher" },
-  { id: "projects",     label: "Projects",     icon: "🗂️", desc: "Manage & showcase projects" },
+  { id: "ai_publisher", label: "AI Publisher", icon: "✨", desc: "Select from your GitHub repos (public & private) & publish with AI" },
+  { id: "projects",     label: "Projects",     icon: "🗂️", desc: "Manage, reorder & edit live showcase projects" },
   { id: "profile",      label: "Profile",      icon: "👤", desc: "Name, bio, roles, stats" },
   { id: "experience",   label: "Experience",   icon: "📅", desc: "Work history" },
   { id: "testimonials", label: "Testimonials", icon: "💬", desc: "Client quotes" },
@@ -16,11 +16,11 @@ const TABS: { id: Section; label: string; icon: string; desc: string }[] = [
 ];
 
 export default function AdminPage() {
-  const [authed,    setAuthed]    = useState<boolean | null>(null); // null = checking
+  const [authed,    setAuthed]    = useState<boolean | null>(null);
   const [password,  setPassword]  = useState("");
   const [authErr,   setAuthErr]   = useState("");
   const [logging,   setLogging]   = useState(false);
-  const [tab,        setTab]       = useState<Section>("ai_copilot");
+  const [tab,        setTab]       = useState<Section>("ai_publisher");
   const [saving,     setSaving]    = useState(false);
   const [saved,      setSaved]     = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -31,7 +31,7 @@ export default function AdminPage() {
   const [fs, setFs] = useState<FS>(IDLE);
   const { loading, data, sha, error } = fs;
 
-  // Check existing session on mount
+  // Check auth session
   useEffect(() => {
     fetch("/api/admin/auth")
       .then((r) => r.json())
@@ -45,7 +45,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (!authed) return;
-    if (tab === "resume" || tab === "ai_copilot") {
+    if (tab === "resume" || tab === "ai_publisher") {
       setFs(IDLE);
       return;
     }
@@ -58,11 +58,11 @@ export default function AdminPage() {
       .then((json) => {
         if (cancelled) return;
         if (!json.content) throw new Error(json.error ?? "Failed to load");
-        setFs({ loading: false, data: json.content, sha: json.sha, error: "" });
+        setFs({ loading: false, data: json.content, sha: json.sha || "local", error: "" });
       })
       .catch((e: unknown) => {
         if (!cancelled)
-          setFs({ loading: false, data: null, sha: "", error: e instanceof Error ? e.message : "Unknown error" });
+          setFs({ loading: false, data: null, sha: "", error: e instanceof Error ? e.message : "Error loading data" });
       });
 
     return () => { cancelled = true; };
@@ -80,7 +80,7 @@ export default function AdminPage() {
       });
       const json = await res.json();
       if (res.ok) setAuthed(true);
-      else setAuthErr(json.error ?? "Login failed.");
+      else setAuthErr(json.error ?? "Login failed. Check your password.");
     } finally {
       setLogging(false);
     }
@@ -92,6 +92,7 @@ export default function AdminPage() {
   }
 
   async function save() {
+    if (!data) return;
     setSaving(true);
     setSaved(false);
     setFs((prev) => ({ ...prev, error: "" }));
@@ -104,7 +105,7 @@ export default function AdminPage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Save failed");
       setSaved(true);
-      setTimeout(() => setSaved(false), 5000);
+      setTimeout(() => setSaved(false), 4000);
       setRefreshKey((k) => k + 1);
     } catch (e: unknown) {
       setFs((prev) => ({ ...prev, error: e instanceof Error ? e.message : "Save failed" }));
@@ -113,7 +114,6 @@ export default function AdminPage() {
     }
   }
 
-  // Checking session
   if (authed === null) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center">
@@ -122,40 +122,41 @@ export default function AdminPage() {
     );
   }
 
-  // Login screen
   if (!authed) {
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-sm">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mx-auto mb-4 text-3xl">🔐</div>
-            <h1 className="text-2xl font-bold text-white">Portfolio Admin</h1>
-            <p className="text-zinc-400 text-sm mt-1">Real-Time CMS &amp; AI Co-Pilot</p>
+        <div className="w-full max-w-sm bg-zinc-900 border border-zinc-800 p-8 rounded-2xl shadow-xl">
+          <div className="text-center mb-6">
+            <div className="w-12 h-12 rounded-xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mx-auto mb-3 text-xl">
+              🔐
+            </div>
+            <h1 className="text-xl font-bold text-white">Portfolio Admin</h1>
+            <p className="text-zinc-400 text-xs mt-1">Sign in to manage projects &amp; content</p>
           </div>
           <form onSubmit={login} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-zinc-300 mb-2">Password</label>
+              <label className="block text-xs font-medium text-zinc-300 mb-1.5">Password</label>
               <input
                 type="password"
                 required
                 autoFocus
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter admin password"
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-xl px-4 py-3.5 text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500 transition-colors text-base"
+                placeholder="Enter password"
+                className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3.5 py-2.5 text-white placeholder-zinc-500 text-sm focus:outline-none focus:border-orange-500"
               />
             </div>
-            {authErr && <p className="text-red-400 text-sm bg-red-500/10 px-3 py-2 rounded-lg">{authErr}</p>}
+            {authErr && <p className="text-red-400 text-xs bg-red-500/10 p-2.5 rounded-lg">{authErr}</p>}
             <button
               type="submit"
               disabled={logging}
-              className="w-full py-3.5 bg-orange-500 hover:bg-orange-400 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors text-base flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-2.5 bg-orange-500 hover:bg-orange-400 text-white font-semibold rounded-xl text-sm transition-colors cursor-pointer"
             >
-              {logging ? <><Spinner /> Signing in...</> : "Sign In"}
+              {logging ? "Signing in..." : "Sign In"}
             </button>
           </form>
-          <p className="text-center text-zinc-600 text-xs mt-6">
-            <Link href="/" className="hover:text-orange-400 transition-colors">← Back to portfolio</Link>
+          <p className="text-center text-zinc-500 text-xs mt-5">
+            <Link href="/" className="hover:text-white transition-colors">← Back to website</Link>
           </p>
         </div>
       </div>
@@ -164,13 +165,13 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
-      {/* Top bar */}
-      <div className="sticky top-0 z-20 bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+      {/* Top Navbar */}
+      <div className="sticky top-0 z-20 bg-zinc-950/90 backdrop-blur border-b border-zinc-800">
+        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-base">Kato<span className="text-orange-500">.</span></span>
-            <span className="text-zinc-500 text-xs px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 font-mono">
-              Live Real-Time
+            <span className="font-bold text-base tracking-tight">Kato Samuel<span className="text-orange-500">.</span></span>
+            <span className="text-xs text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded font-mono">
+              Admin &amp; AI Studio
             </span>
           </div>
           <div className="flex items-center gap-4">
@@ -178,23 +179,24 @@ export default function AdminPage() {
               href="/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm text-zinc-400 hover:text-orange-400 transition-colors hidden sm:flex items-center gap-1"
+              className="text-xs text-zinc-400 hover:text-white transition-colors flex items-center gap-1 font-medium"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-              View Live Site
+              Live Portfolio ↗
             </a>
-            <button type="button" onClick={logout} className="text-sm text-zinc-400 hover:text-red-400 transition-colors cursor-pointer">
-              Sign out
+            <button
+              type="button"
+              onClick={logout}
+              className="text-xs text-zinc-400 hover:text-red-400 transition-colors cursor-pointer"
+            >
+              Sign Out
             </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6">
-        {/* Navigation Tiles */}
-        <div className="grid grid-cols-3 sm:grid-cols-7 gap-2 sm:gap-2.5 mb-8">
+      <div className="max-w-5xl mx-auto px-4 py-6">
+        {/* Navigation Tabs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 mb-8">
           {TABS.map((t) => (
             <button
               type="button"
@@ -202,12 +204,12 @@ export default function AdminPage() {
               onClick={() => setTab(t.id)}
               className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border transition-all cursor-pointer ${
                 tab === t.id
-                  ? "bg-orange-500/15 border-orange-500/60 text-orange-400 shadow-lg shadow-orange-500/10"
-                  : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
+                  ? "bg-zinc-850 border-orange-500/60 text-white font-semibold shadow-md"
+                  : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700"
               }`}
             >
-              <span className="text-xl sm:text-2xl">{t.icon}</span>
-              <span className="text-[10px] sm:text-xs font-semibold text-center leading-tight">{t.label}</span>
+              <span className="text-xl">{t.icon}</span>
+              <span className="text-xs leading-tight text-center">{t.label}</span>
             </button>
           ))}
         </div>
@@ -215,85 +217,78 @@ export default function AdminPage() {
         {/* Section Header */}
         <div className="flex items-center justify-between mb-5">
           <div>
-            <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
               <span>{TABS.find((t) => t.id === tab)?.icon}</span>
               <span>{TABS.find((t) => t.id === tab)?.label}</span>
             </h2>
-            <p className="text-zinc-400 text-xs sm:text-sm">{TABS.find((t) => t.id === tab)?.desc}</p>
+            <p className="text-zinc-400 text-xs">{TABS.find((t) => t.id === tab)?.desc}</p>
           </div>
-          {tab !== "resume" && tab !== "ai_copilot" && (
+          {tab !== "resume" && tab !== "ai_publisher" && (
             <button
               type="button"
               onClick={load}
-              title="Reload from local storage"
-              className="p-2 text-zinc-400 hover:text-orange-400 transition-colors cursor-pointer"
+              title="Refresh"
+              className="p-1.5 text-zinc-400 hover:text-white transition-colors cursor-pointer"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
           )}
         </div>
 
-        {/* AI Co-Pilot View */}
-        {tab === "ai_copilot" && (
-          <AICopilotView
-            onProjectPublished={() => {
-              setTab("projects");
-              setRefreshKey((k) => k + 1);
-            }}
-          />
+        {/* AI GitHub Publisher View */}
+        {tab === "ai_publisher" && (
+          <AIGitHubPublisher onProjectPublished={() => {
+            // switch to projects tab after publishing or notify
+          }} />
         )}
 
-        {/* Resume Uploader */}
+        {/* Resume View */}
         {tab === "resume" && <ResumeUploader />}
 
         {/* Loading Spinner */}
-        {tab !== "resume" && tab !== "ai_copilot" && loading && (
+        {tab !== "resume" && tab !== "ai_publisher" && loading && (
           <div className="flex flex-col items-center py-16 gap-3 text-zinc-500">
-            <span className="w-10 h-10 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm">Loading data in real time…</p>
+            <span className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            <p className="text-xs">Loading data...</p>
           </div>
         )}
 
         {/* Error */}
         {error && !loading && (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-4 flex gap-3">
-            <span className="text-xl shrink-0">⚠️</span>
-            <div>
-              <p className="text-red-400 font-medium text-sm">Error</p>
-              <p className="text-red-300 text-xs mt-1">{error}</p>
-            </div>
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-4 text-red-400 text-xs">
+            ⚠️ {error}
           </div>
         )}
 
         {/* Content Editors */}
-        {!loading && data && tab !== "resume" && tab !== "ai_copilot" && (
+        {!loading && data && tab !== "resume" && tab !== "ai_publisher" && (
           <>
-            {tab === "projects"     && <ProjectsEditor data={data} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))}/>}
-            {tab === "profile"      && <ProfileEditor data={data} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))}/>}
-            {tab === "experience"   && <ArrayEditor data={data} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))} fields={experienceFields} itemLabel="role" emptyLabel="experience entry" />}
-            {tab === "testimonials" && <ArrayEditor data={data} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))} fields={testimonialFields} itemLabel="name" emptyLabel="testimonial" />}
-            {tab === "services"     && <ArrayEditor data={data} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))} fields={serviceFields} itemLabel="title" emptyLabel="service" />}
+            {tab === "projects"     && <ProjectsEditor data={Array.isArray(data) ? data : []} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))} onSaveNeeded={save} onSwitchToAI={() => setTab("ai_publisher")} />}
+            {tab === "profile"      && <ProfileEditor data={data} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))} />}
+            {tab === "experience"   && <ArrayEditor data={Array.isArray(data) ? data : []} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))} fields={experienceFields} itemLabel="role" emptyLabel="experience entry" />}
+            {tab === "testimonials" && <ArrayEditor data={Array.isArray(data) ? data : []} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))} fields={testimonialFields} itemLabel="name" emptyLabel="testimonial" />}
+            {tab === "services"     && <ArrayEditor data={Array.isArray(data) ? data : []} onChange={(d) => setFs((prev) => ({ ...prev, data: d }))} fields={serviceFields} itemLabel="title" emptyLabel="service" />}
 
-            {/* Sticky Real-Time Save Bar */}
+            {/* Sticky Save Bar */}
             <div className="mt-8 sticky bottom-4 z-10">
-              <div className="bg-zinc-900/95 backdrop-blur border border-zinc-700 rounded-2xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-xl">
+              <div className="bg-zinc-900/95 backdrop-blur border border-zinc-700 rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xl">
                 <button
                   type="button"
                   onClick={save}
                   disabled={saving}
-                  className="px-6 py-3 bg-orange-500 hover:bg-orange-400 disabled:opacity-60 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm cursor-pointer shadow-lg shadow-orange-500/20"
+                  className="w-full sm:w-auto px-6 py-2.5 bg-orange-500 hover:bg-orange-400 disabled:opacity-60 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer"
                 >
-                  {saving ? <><Spinner /> Saving in Real Time…</> : <>💾 Save Changes Immediately</>}
+                  {saving ? "Saving..." : "💾 Save Changes"}
                 </button>
                 {saved ? (
-                  <p className="text-green-400 text-xs sm:text-sm font-semibold text-center sm:text-left flex items-center gap-1.5">
-                    <span>✓</span> Saved! Updates are live on your portfolio immediately.
+                  <p className="text-emerald-400 text-xs font-semibold flex items-center gap-1">
+                    <span>✓</span> Saved successfully in real time!
                   </p>
                 ) : (
-                  <p className="text-zinc-400 text-xs text-center sm:text-left">
-                    Updates write directly to disk in real time.
+                  <p className="text-zinc-400 text-xs">
+                    Updates are written directly to your live portfolio.
                   </p>
                 )}
               </div>
@@ -305,613 +300,965 @@ export default function AdminPage() {
   );
 }
 
-/* ──────────────────────────────────────────
-   AI Co-Pilot View ("Inquire Before Upload")
-────────────────────────────────────────── */
+/* ────────────────────────────────────────────────────────
+   AI GitHub Project Publisher (Knows All Repos, Public & Private)
+──────────────────────────────────────────────────────── */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function AICopilotView({ onProjectPublished }: { onProjectPublished: () => void }) {
-  const [prompt, setPrompt] = useState("");
-  const [repoUrl, setRepoUrl] = useState("");
-  const [generating, setGenerating] = useState(false);
-  const [publishing, setPublishing] = useState(false);
+function AIGitHubPublisher({ onProjectPublished }: { onProjectPublished: () => void }) {
+  const [loadingRepos, setLoadingRepos] = useState(true);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [draft, setDraft] = useState<any | null>(null);
-  const [inquiry, setInquiry] = useState("");
-  const [error, setError] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
+  const [repos, setRepos] = useState<any[]>([]);
+  const [hasToken, setHasToken] = useState(false);
+  const [canAccessPrivate, setCanAccessPrivate] = useState(false);
+  const [tokenInput, setTokenInput] = useState("");
+  const [showTokenModal, setShowTokenModal] = useState(false);
+  const [savingToken, setSavingToken] = useState(false);
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState<"all" | "private" | "public" | "mobile" | "web" | "backend">("all");
 
-  const generate = async () => {
-    if (!prompt.trim() && !repoUrl.trim()) return;
-    setGenerating(true);
-    setError("");
-    setSuccessMsg("");
+  // AI draft state
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [selectedRepo, setSelectedRepo] = useState<any | null>(null);
+  const [drafting, setDrafting] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [aiDraft, setAiDraft] = useState<any | null>(null);
+  const [inquiryMsg, setInquiryMsg] = useState("");
+  const [publishing, setPublishing] = useState(false);
+  const [publishSuccess, setPublishSuccess] = useState("");
+  const [customPrompt, setCustomPrompt] = useState("");
+
+  const fetchRepos = useCallback(async () => {
+    setLoadingRepos(true);
+    try {
+      const res = await fetch("/api/admin/repos");
+      const json = await res.json();
+      if (res.ok && Array.isArray(json.repos)) {
+        setRepos(json.repos);
+        setHasToken(Boolean(json.hasToken));
+        setCanAccessPrivate(Boolean(json.canAccessPrivate));
+      }
+    } catch {
+      // ignore
+    } finally {
+      setLoadingRepos(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchRepos();
+  }, [fetchRepos]);
+
+  async function handleSaveToken(e: React.FormEvent) {
+    e.preventDefault();
+    if (!tokenInput.trim()) return;
+    setSavingToken(true);
+    try {
+      const res = await fetch("/api/admin/repos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: tokenInput.trim() }),
+      });
+      if (res.ok) {
+        setShowTokenModal(false);
+        setTokenInput("");
+        fetchRepos();
+      } else {
+        alert("Could not save token");
+      }
+    } finally {
+      setSavingToken(false);
+    }
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async function selectAndDraft(repo: any) {
+    setSelectedRepo(repo);
+    setDrafting(true);
+    setAiDraft(null);
+    setPublishSuccess("");
     try {
       const res = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode: "generate_project",
-          prompt: prompt.trim(),
-          repoUrl: repoUrl.trim(),
+          repoUrl: repo.url,
+          repoData: repo,
+          prompt: repo.description || repo.name,
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to generate project");
-      setDraft(data.draft);
-      setInquiry(data.inquiryMessage);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Generation failed");
+      if (data.draft) {
+        setAiDraft(data.draft);
+        setInquiryMsg(data.inquiryMessage || `I've analyzed ${repo.name}. Would you like me to upload this project?`);
+      }
+    } catch {
+      alert("AI drafting failed. Please check connection.");
     } finally {
-      setGenerating(false);
+      setDrafting(false);
     }
-  };
+  }
 
-  const publish = async () => {
-    if (!draft) return;
+  async function draftFromCustomPrompt() {
+    if (!customPrompt.trim()) return;
+    setSelectedRepo(null);
+    setDrafting(true);
+    setAiDraft(null);
+    setPublishSuccess("");
+    try {
+      const res = await fetch("/api/ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "generate_project",
+          prompt: customPrompt.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (data.draft) {
+        setAiDraft(data.draft);
+        setInquiryMsg(data.inquiryMessage || "I've drafted your project based on your description. Would you like me to publish this?");
+      }
+    } catch {
+      alert("AI drafting failed.");
+    } finally {
+      setDrafting(false);
+    }
+  }
+
+  async function confirmAndPublish() {
+    if (!aiDraft) return;
     setPublishing(true);
-    setError("");
     try {
       const res = await fetch("/api/ai", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           mode: "publish_project",
-          project: draft,
+          project: aiDraft,
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to publish project");
-      setSuccessMsg(data.message);
-      setDraft(null);
-      setPrompt("");
-      setRepoUrl("");
-      setTimeout(() => {
+      if (res.ok && data.success) {
+        setPublishSuccess(data.message || `Project "${aiDraft.title}" is now live!`);
+        setAiDraft(null);
+        setSelectedRepo(null);
         onProjectPublished();
-      }, 1500);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Publish failed");
+      } else {
+        alert(data.error || "Publishing failed");
+      }
+    } catch {
+      alert("Error publishing project");
     } finally {
       setPublishing(false);
     }
-  };
+  }
+
+  // Filter repositories
+  const filteredRepos = repos.filter((r) => {
+    // Search query
+    const matchSearch =
+      !search ||
+      r.name.toLowerCase().includes(search.toLowerCase()) ||
+      (r.description && r.description.toLowerCase().includes(search.toLowerCase())) ||
+      (r.language && r.language.toLowerCase().includes(search.toLowerCase())) ||
+      (r.topics && r.topics.some((t: string) => t.toLowerCase().includes(search.toLowerCase())));
+
+    if (!matchSearch) return false;
+
+    if (filter === "private") return r.isPrivate;
+    if (filter === "public") return !r.isPrivate;
+    if (filter === "mobile") return /dart|flutter|swift|kotlin|mobile/i.test(r.language || "") || (r.topics && r.topics.some((t: string) => /flutter|mobile/i.test(t)));
+    if (filter === "web") return /typescript|javascript|react|next|html/i.test(r.language || "");
+    if (filter === "backend") return /php|python|laravel|node|go|sql/i.test(r.language || "");
+    return true;
+  });
+
+  const privateCount = repos.filter((r) => r.isPrivate).length;
+  const publicCount = repos.filter((r) => !r.isPrivate).length;
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-br from-zinc-900 via-zinc-900 to-orange-950/20 border border-zinc-800 rounded-2xl p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-10 h-10 rounded-xl bg-orange-500/20 border border-orange-500/40 flex items-center justify-center text-xl">
-            ✨
+      {/* GitHub Access Banner */}
+      <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+            <h3 className="text-sm font-bold text-white">
+              GitHub Repositories Knowledge Base
+            </h3>
+            {canAccessPrivate ? (
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                Private &amp; Public Repos Active 🔒
+              </span>
+            ) : (
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                Public Repos Only
+              </span>
+            )}
           </div>
-          <div>
-            <h3 className="text-base font-bold text-white">AI Project Importer &amp; Generator</h3>
-            <p className="text-xs text-zinc-400">
-              Describe what you built or paste a GitHub repo. AI structures the showcase and inquires from you before uploading.
-            </p>
-          </div>
+          <p className="text-xs text-zinc-400 mt-1">
+            {canAccessPrivate
+              ? `Loaded ${repos.length} total repositories (${privateCount} private, ${publicCount} public). Pick any project below for AI to draft and post.`
+              : `Found ${publicCount} public repositories. Connect your GitHub token to reveal and publish your private repositories.`}
+          </p>
         </div>
 
-        {/* Input box */}
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
-              Paste GitHub Repository URL (Optional)
-            </label>
-            <input
-              type="text"
-              value={repoUrl}
-              onChange={(e) => setRepoUrl(e.target.value)}
-              placeholder="https://github.com/katosamuelraymond/my-new-project"
-              className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-1.5">
-              Project Pitch or Description
-            </label>
-            <textarea
-              rows={3}
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="e.g. I built an AI Voice Assistant in Flutter and Python that connects to WebSockets and processes speech in real time with Whisper..."
-              className="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-orange-500 resize-none"
-            />
-          </div>
-
-          {/* Quick Prompts */}
-          <div className="flex flex-wrap gap-2 pt-1">
-            <span className="text-[11px] text-zinc-500 self-center">Quick ideas:</span>
-            {[
-              "Real-Time Delivery Tracker in Flutter & Supabase",
-              "Multi-Vendor Marketplace in Next.js & PostgreSQL",
-              "Microservices Auth Service in Laravel & Redis",
-            ].map((idea) => (
-              <button
-                key={idea}
-                type="button"
-                onClick={() => setPrompt(idea)}
-                className="text-[11px] px-2.5 py-1 rounded-lg bg-zinc-800 text-zinc-300 hover:text-orange-400 hover:bg-zinc-750 border border-zinc-700 transition-colors cursor-pointer"
-              >
-                + {idea}
-              </button>
-            ))}
-          </div>
-
-          <button
-            type="button"
-            onClick={generate}
-            disabled={generating || (!prompt.trim() && !repoUrl.trim())}
-            className="w-full py-3 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 disabled:opacity-50 text-white font-bold rounded-xl transition-all text-sm flex items-center justify-center gap-2 cursor-pointer shadow-lg shadow-orange-500/25"
-          >
-            {generating ? <><Spinner /> Analyzing &amp; Drafting Showcase…</> : "✨ Generate Project Showcase"}
-          </button>
-        </div>
-
-        {error && (
-          <p className="mt-4 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs">
-            ⚠️ {error}
-          </p>
-        )}
-
-        {successMsg && (
-          <p className="mt-4 p-3 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-semibold">
-            ✓ {successMsg}
-          </p>
-        )}
+        <button
+          type="button"
+          onClick={() => setShowTokenModal(true)}
+          className="px-3.5 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-xs text-zinc-200 border border-zinc-700 rounded-lg transition-colors cursor-pointer shrink-0 flex items-center gap-1.5 font-medium"
+        >
+          <span>🔑</span>
+          <span>{hasToken ? "Update GitHub Token" : "Connect GitHub Token (Unlock Private Repos)"}</span>
+        </button>
       </div>
 
-      {/* AI Inquiry & Review Draft Card */}
-      {draft && (
-        <div className="bg-zinc-900 border-2 border-orange-500/50 rounded-2xl p-6 space-y-6 shadow-2xl">
-          <div className="bg-orange-500/10 border border-orange-500/30 rounded-xl p-4">
-            <div className="flex items-start gap-2.5">
+      {/* Token Modal */}
+      {showTokenModal && (
+        <div className="p-5 bg-zinc-900 border-2 border-orange-500/40 rounded-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-bold text-white flex items-center gap-2">
+              <span>🔑</span> Connect GitHub Personal Access Token
+            </h4>
+            <button
+              type="button"
+              onClick={() => setShowTokenModal(false)}
+              className="text-zinc-500 hover:text-white text-xs cursor-pointer"
+            >
+              ✕ Close
+            </button>
+          </div>
+          <p className="text-xs text-zinc-400">
+            A GitHub Personal Access Token (classic with <code className="text-orange-400">repo</code> scope or fine-grained token) allows the AI to read your private repositories, parse their READMEs, and showcase them on your portfolio.
+          </p>
+          <form onSubmit={handleSaveToken} className="space-y-3">
+            <input
+              type="password"
+              value={tokenInput}
+              onChange={(e) => setTokenInput(e.target.value)}
+              placeholder="Paste your GitHub token (ghp_... or github_pat_...)"
+              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500 font-mono"
+            />
+            <div className="flex items-center justify-between">
+              <a
+                href="https://github.com/settings/tokens/new?scopes=repo&description=SamuelTechUg+Portfolio+Admin"
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] text-orange-400 hover:underline flex items-center gap-1"
+              >
+                Generate Token on GitHub ↗
+              </a>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowTokenModal(false)}
+                  className="px-3 py-1.5 text-xs text-zinc-400 hover:text-white cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingToken || !tokenInput.trim()}
+                  className="px-4 py-1.5 bg-orange-500 hover:bg-orange-400 text-white font-semibold rounded-lg text-xs transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  {savingToken ? "Connecting..." : "Save & Unlock Private Repos"}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Success Notification */}
+      {publishSuccess && (
+        <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🎉</span>
+            <span>{publishSuccess}</span>
+          </div>
+          <a href="/#projects" target="_blank" className="font-semibold underline hover:text-white">
+            View on Live Site ↗
+          </a>
+        </div>
+      )}
+
+      {/* AI Inquiry & Review Card (When a repo is being drafted / reviewed) */}
+      {(drafting || aiDraft) && (
+        <div className="p-5 bg-zinc-900 border-2 border-orange-500 rounded-xl space-y-4 shadow-2xl">
+          <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+            <div className="flex items-center gap-2">
               <span className="text-xl">🤖</span>
               <div>
-                <h4 className="text-sm font-bold text-orange-400">AI Inquiry &amp; Confirmation:</h4>
-                <p className="text-xs text-zinc-200 mt-1 whitespace-pre-wrap leading-relaxed">
-                  {inquiry}
+                <h4 className="text-sm font-bold text-white">AI Project Review &amp; Confirmation</h4>
+                <p className="text-[11px] text-zinc-400">
+                  {drafting ? "AI is inspecting repository structure, language, and details..." : "AI has prepared your showcase case study:"}
                 </p>
               </div>
             </div>
+            {!drafting && (
+              <button
+                type="button"
+                onClick={() => { setAiDraft(null); setSelectedRepo(null); }}
+                className="text-xs text-zinc-500 hover:text-white cursor-pointer"
+              >
+                ✕ Cancel
+              </button>
+            )}
           </div>
 
-          {/* Editable Draft Preview */}
-          <div className="space-y-4 bg-zinc-950 p-5 rounded-xl border border-zinc-800">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-400">
-              Inspect &amp; Tweak Showcase Draft
-            </h4>
+          {drafting && (
+            <div className="py-10 flex flex-col items-center justify-center gap-3">
+              <span className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+              <p className="text-xs text-zinc-400">Analyzing repository architecture &amp; composing case study...</p>
+            </div>
+          )}
 
-            <div className="grid sm:grid-cols-2 gap-3">
+          {!drafting && aiDraft && (
+            <div className="space-y-4">
+              {/* Inquiry prompt */}
+              <div className="p-3 bg-zinc-950 rounded-lg border border-zinc-800 text-xs text-zinc-300">
+                <span className="font-semibold text-orange-400">AI Inquiry: </span>
+                <span>{inquiryMsg}</span>
+              </div>
+
+              {/* Editable Fields */}
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-zinc-400 block mb-1">Project Title</label>
+                  <input
+                    type="text"
+                    value={aiDraft.title}
+                    onChange={(e) => setAiDraft({ ...aiDraft, title: e.target.value })}
+                    className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-zinc-400 block mb-1">Category</label>
+                  <select
+                    value={aiDraft.category}
+                    onChange={(e) => setAiDraft({ ...aiDraft, category: e.target.value })}
+                    className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500"
+                  >
+                    <option value="Full-Stack Web">Full-Stack Web</option>
+                    <option value="Mobile App">Mobile App</option>
+                    <option value="Enterprise Systems">Enterprise Systems</option>
+                    <option value="AI &amp; Backend">AI &amp; Backend</option>
+                    <option value="CMS &amp; Platforms">CMS &amp; Platforms</option>
+                  </select>
+                </div>
+              </div>
+
               <div>
-                <label className="text-xs text-zinc-400 block mb-1">Project Title</label>
+                <label className="text-[11px] font-semibold text-zinc-400 block mb-1">Subtitle</label>
                 <input
-                  value={draft.title}
-                  onChange={(e) => setDraft({ ...draft, title: e.target.value })}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500"
+                  type="text"
+                  value={aiDraft.subtitle}
+                  onChange={(e) => setAiDraft({ ...aiDraft, subtitle: e.target.value })}
+                  className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500"
                 />
               </div>
+
               <div>
-                <label className="text-xs text-zinc-400 block mb-1">Category</label>
-                <select
-                  value={draft.category}
-                  onChange={(e) => setDraft({ ...draft, category: e.target.value })}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500"
-                >
-                  <option value="Full-Stack Web">Full-Stack Web</option>
-                  <option value="Mobile App">Mobile App</option>
-                  <option value="Enterprise Systems">Enterprise Systems</option>
-                  <option value="CMS & Platforms">CMS & Platforms</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-xs text-zinc-400 block mb-1">Subtitle</label>
-              <input
-                value={draft.subtitle}
-                onChange={(e) => setDraft({ ...draft, subtitle: e.target.value })}
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500"
-              />
-            </div>
-
-            <div>
-              <label className="text-xs text-zinc-400 block mb-1">Description</label>
-              <textarea
-                rows={3}
-                value={draft.description}
-                onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500 resize-none"
-              />
-            </div>
-
-            <div className="grid sm:grid-cols-2 gap-3">
-              <div>
-                <label className="text-xs text-zinc-400 block mb-1">Technologies (comma-separated)</label>
-                <input
-                  value={(draft.tech || []).join(", ")}
-                  onChange={(e) => setDraft({ ...draft, tech: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500"
+                <label className="text-[11px] font-semibold text-zinc-400 block mb-1">Description</label>
+                <textarea
+                  rows={3}
+                  value={aiDraft.description}
+                  onChange={(e) => setAiDraft({ ...aiDraft, description: e.target.value })}
+                  className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500 resize-none"
                 />
               </div>
+
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-[11px] font-semibold text-zinc-400 block mb-1">Tech Stack (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={(aiDraft.tech || []).join(", ")}
+                    onChange={(e) => setAiDraft({ ...aiDraft, tech: e.target.value.split(",").map((s) => s.trim()).filter(Boolean) })}
+                    className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] font-semibold text-zinc-400 block mb-1">Live URL (optional)</label>
+                  <input
+                    type="text"
+                    value={aiDraft.live || ""}
+                    onChange={(e) => setAiDraft({ ...aiDraft, live: e.target.value })}
+                    placeholder="https://..."
+                    className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500"
+                  />
+                </div>
+              </div>
+
               <div>
-                <label className="text-xs text-zinc-400 block mb-1">GitHub URL</label>
-                <input
-                  value={draft.github || ""}
-                  onChange={(e) => setDraft({ ...draft, github: e.target.value })}
-                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-orange-500"
+                <label className="text-[11px] font-semibold text-zinc-400 block mb-1">Key Highlights (one per line)</label>
+                <textarea
+                  rows={3}
+                  value={(aiDraft.highlights || []).join("\n")}
+                  onChange={(e) => setAiDraft({ ...aiDraft, highlights: e.target.value.split("\n").filter(Boolean) })}
+                  className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-orange-500 resize-none"
                 />
               </div>
+
+              <div className="flex items-center justify-between pt-3 border-t border-zinc-800">
+                <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={Boolean(aiDraft.featured)}
+                    onChange={(e) => setAiDraft({ ...aiDraft, featured: e.target.checked })}
+                  />
+                  <span>Feature on Homepage Hero</span>
+                </label>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setAiDraft(null); setSelectedRepo(null); }}
+                    className="px-4 py-2 text-xs text-zinc-400 hover:text-white cursor-pointer"
+                  >
+                    Discard
+                  </button>
+                  <button
+                    type="button"
+                    disabled={publishing}
+                    onClick={confirmAndPublish}
+                    className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs transition-colors cursor-pointer flex items-center gap-1.5 shadow-lg"
+                  >
+                    {publishing ? "Publishing..." : "🚀 Yes, Publish to Live Portfolio"}
+                  </button>
+                </div>
+              </div>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Or: Pitch an idea / Custom prompt */}
+      <div className="p-4 bg-zinc-900 border border-zinc-800 rounded-xl space-y-2">
+        <label className="text-xs font-semibold text-white block">
+          💡 Or pitch a custom project to AI directly:
+        </label>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={customPrompt}
+            onChange={(e) => setCustomPrompt(e.target.value)}
+            placeholder="e.g. Built a multi-tenant POS system in Laravel 11 with barcode scanning and receipt printing..."
+            className="flex-1 bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500"
+          />
+          <button
+            type="button"
+            onClick={draftFromCustomPrompt}
+            disabled={drafting || !customPrompt.trim()}
+            className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-orange-400 text-xs font-semibold rounded-lg transition-colors cursor-pointer shrink-0 disabled:opacity-40"
+          >
+            Draft with AI ✨
+          </button>
+        </div>
+      </div>
+
+      {/* Repositories Search and Filter Controls */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="relative flex-1">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search repositories by name, language, or topic..."
+              className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-orange-500"
+            />
+            <span className="absolute left-3 top-3 text-zinc-500 text-xs">🔍</span>
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-2.5 text-zinc-500 hover:text-white text-xs cursor-pointer"
+              >
+                ✕
+              </button>
+            )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row items-center gap-3">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
             <button
               type="button"
-              onClick={publish}
-              disabled={publishing}
-              className="flex-1 w-full py-3.5 bg-green-600 hover:bg-green-500 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm cursor-pointer shadow-lg shadow-green-600/30"
+              onClick={() => setFilter("all")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+                filter === "all" ? "bg-zinc-700 text-white" : "bg-zinc-900 text-zinc-400 hover:text-white"
+              }`}
             >
-              {publishing ? <><Spinner /> Uploading &amp; Publishing…</> : "✓ Yes, Approve & Publish to Portfolio"}
+              All ({repos.length})
             </button>
             <button
               type="button"
-              onClick={() => setDraft(null)}
-              className="py-3.5 px-6 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold rounded-xl text-sm transition-colors cursor-pointer"
+              onClick={() => setFilter("private")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+                filter === "private" ? "bg-amber-500/20 text-amber-300 border border-amber-500/30" : "bg-zinc-900 text-zinc-400 hover:text-white"
+              }`}
             >
-              Discard Draft
+              Private 🔒 ({privateCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilter("public")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+                filter === "public" ? "bg-zinc-700 text-white" : "bg-zinc-900 text-zinc-400 hover:text-white"
+              }`}
+            >
+              Public 🌐 ({publicCount})
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilter("mobile")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+                filter === "mobile" ? "bg-zinc-700 text-white" : "bg-zinc-900 text-zinc-400 hover:text-white"
+              }`}
+            >
+              Flutter / Mobile
+            </button>
+            <button
+              type="button"
+              onClick={() => setFilter("backend")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer transition-colors ${
+                filter === "backend" ? "bg-zinc-700 text-white" : "bg-zinc-900 text-zinc-400 hover:text-white"
+              }`}
+            >
+              Laravel / PHP
             </button>
           </div>
         </div>
-      )}
+
+        {/* Repos Grid */}
+        {loadingRepos ? (
+          <div className="py-16 text-center text-zinc-500 space-y-2">
+            <span className="w-7 h-7 border-2 border-orange-500 border-t-transparent rounded-full animate-spin inline-block" />
+            <p className="text-xs">Connecting to GitHub &amp; fetching repositories...</p>
+          </div>
+        ) : filteredRepos.length === 0 ? (
+          <div className="p-8 text-center bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-400 text-xs">
+            No repositories found matching your filter or search.
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 gap-3">
+            {filteredRepos.map((repo) => (
+              <div
+                key={repo.name}
+                className="p-4 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 rounded-xl flex flex-col justify-between gap-3 transition-colors"
+              >
+                <div>
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <h4 className="text-sm font-bold text-white truncate" title={repo.name}>
+                      {repo.name}
+                    </h4>
+                    {repo.isPrivate ? (
+                      <span className="text-[10px] font-semibold font-mono px-2 py-0.5 rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0">
+                        🔒 Private
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-semibold font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 shrink-0">
+                        🌐 Public
+                      </span>
+                    )}
+                  </div>
+
+                  <p className="text-xs text-zinc-400 line-clamp-2 min-h-[32px]">
+                    {repo.description || "No description provided on GitHub."}
+                  </p>
+
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    {repo.language && (
+                      <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded">
+                        {repo.language}
+                      </span>
+                    )}
+                    {repo.homepage && (
+                      <span className="text-[10px] text-emerald-400">
+                        ● Live URL available
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between">
+                  <a
+                    href={repo.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] text-zinc-500 hover:text-zinc-300 transition-colors"
+                  >
+                    View on GitHub ↗
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => selectAndDraft(repo)}
+                    className="px-3 py-1.5 bg-orange-500 hover:bg-orange-400 text-white font-semibold text-xs rounded-lg transition-colors cursor-pointer flex items-center gap-1"
+                  >
+                    <span>✨ Select &amp; Post with AI</span>
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 /* ──────────────────────────────────────────
-   Projects Editor (With Image Upload & Highlights)
+   Dedicated Projects Manager & Uploader
 ────────────────────────────────────────── */
-type GhRepo = { name: string; description: string; url: string; homepage: string; language: string };
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function ProjectsEditor({ data, onChange, onSaveNeeded, onSwitchToAI }: { data: any[]; onChange: (d: any) => void; onSaveNeeded: () => void; onSwitchToAI: () => void }) {
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
 
-function normalizeUrl(url: string): string {
-  if (!url) return url;
-  return /^https?:\/\//i.test(url) ? url : `https://${url}`;
-}
-
-function repoToProject(repo: GhRepo) {
-  const title = repo.name.replace(/-|_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-  const langMap: Record<string, { tech: string[]; tags: string[]; category: string }> = {
-    TypeScript:  { tech: ["Next.js", "TypeScript", "Tailwind CSS"], tags: ["Next.js", "TypeScript"], category: "Full-Stack Web" },
-    JavaScript:  { tech: ["Node.js", "JavaScript", "React"],         tags: ["JavaScript"],            category: "Full-Stack Web" },
-    Dart:        { tech: ["Flutter", "Dart"],                       tags: ["Flutter", "Dart"],       category: "Mobile App" },
-    PHP:         { tech: ["Laravel", "PHP", "MySQL"],               tags: ["Laravel"],               category: "Enterprise Systems" },
-    Blade:       { tech: ["Laravel", "Blade", "MySQL"],             tags: ["Laravel"],               category: "Enterprise Systems" },
-    Python:      { tech: ["Python", "FastAPI"],                     tags: ["Python"],                category: "Full-Stack Web" },
-  };
-  const defaults = langMap[repo.language] ?? { tech: repo.language ? [repo.language] : [], tags: [], category: "Full-Stack Web" };
-  return {
-    title,
-    subtitle: repo.description ? repo.description.slice(0, 80) : `${defaults.category} Project`,
-    description: repo.description ?? "",
-    category: defaults.category,
-    tech: defaults.tech,
-    tags: defaults.tags,
-    highlights: ["Production-ready architecture", "Scalable code design"],
-    github: repo.url,
-    live: repo.homepage ? normalizeUrl(repo.homepage) : "",
+  // New project form state
+  const [newProject, setNewProject] = useState({
+    title: "",
+    subtitle: "",
+    category: "Full-Stack Web",
+    description: "",
+    tech: "Next.js, TypeScript, Tailwind CSS",
+    tags: "Next.js, TypeScript",
+    highlights: "Engineered scalable architecture\nClean database schema migrations",
+    github: "https://github.com/katosamuelraymond/",
+    live: "",
     featured: false,
+  });
+
+  const submitNewProject = () => {
+    if (!newProject.title.trim()) {
+      alert("Please enter a project title.");
+      return;
+    }
+
+    const formatted = {
+      title: newProject.title.trim(),
+      subtitle: newProject.subtitle.trim(),
+      category: newProject.category,
+      description: newProject.description.trim(),
+      tech: newProject.tech.split(",").map((s) => s.trim()).filter(Boolean),
+      tags: newProject.tags.split(",").map((s) => s.trim()).filter(Boolean),
+      highlights: newProject.highlights.split("\n").map((s) => s.trim()).filter(Boolean),
+      github: newProject.github.trim(),
+      live: newProject.live.trim() || undefined,
+      featured: newProject.featured,
+    };
+
+    const updated = [formatted, ...data];
+    onChange(updated);
+    setShowAddForm(false);
+    setNewProject({
+      title: "",
+      subtitle: "",
+      category: "Full-Stack Web",
+      description: "",
+      tech: "Next.js, TypeScript, Tailwind CSS",
+      tags: "Next.js, TypeScript",
+      highlights: "",
+      github: "https://github.com/katosamuelraymond/",
+      live: "",
+      featured: false,
+    });
+    setOpenIndex(0);
   };
-}
 
-function ProjectsEditor({ data, onChange }: { data: Record<string, unknown>[]; onChange: (d: unknown) => void }) {
-  const [open,         setOpen]         = useState<number | null>(null);
-  const [repos,        setRepos]        = useState<GhRepo[] | null>(null);
-  const [loadingRepos, setLoadingRepos] = useState(true);
-  const [showPicker,   setShowPicker]   = useState(false);
-  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    fetch("/api/admin/repos")
-      .then((r) => r.json())
-      .then((json) => {
-        if (Array.isArray(json)) setRepos(json);
-      })
-      .catch(() => {})
-      .finally(() => setLoadingRepos(false));
-  }, []);
-
-  const addedUrls = new Set(data.map((p) => p.github as string));
-
-  const addFromRepo = (repo: GhRepo) => {
-    const project = repoToProject(repo);
-    const newData = [project, ...data];
-    onChange(newData);
-    setOpen(0);
-    setShowPicker(false);
+  const removeProject = (idx: number) => {
+    if (confirm("Are you sure you want to delete this project?")) {
+      const updated = data.filter((_, i) => i !== idx);
+      onChange(updated);
+      setOpenIndex(null);
+    }
   };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const update = (i: number, key: string, val: any) => {
-    const v = key === "live" && val ? normalizeUrl(val) : val;
-    const arr = [...data];
-    arr[i] = { ...arr[i], [key]: v };
-    onChange(arr);
-  };
-
-  const move = (i: number, dir: -1 | 1) => {
-    const j = i + dir;
-    if (j < 0 || j >= data.length) return;
-    const arr = [...data];
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-    onChange(arr);
-  };
-
-  const remove = (i: number) => {
-    onChange(data.filter((_, idx) => idx !== i));
-    setOpen(null);
-  };
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadingIdx(index);
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const json = await res.json();
-      if (res.ok && json.url) {
-        update(index, "image", json.url);
-      } else {
-        alert(json.error || "Upload failed");
-      }
-    } catch {
-      alert("Error uploading image");
-    } finally {
-      setUploadingIdx(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-    }
+  const updateProjectField = (idx: number, key: string, value: any) => {
+    const updated = [...data];
+    updated[idx] = { ...updated[idx], [key]: value };
+    onChange(updated);
   };
 
   return (
     <div className="space-y-4">
-      {/* Toggle between views */}
-      <div className="flex gap-2 bg-zinc-900 border border-zinc-800 rounded-xl p-1">
-        <button
-          type="button"
-          onClick={() => setShowPicker(false)}
-          className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
-            !showPicker ? "bg-orange-500 text-white" : "text-zinc-400 hover:text-zinc-200"
-          }`}
-        >
-          All Projects ({data.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowPicker(true)}
-          className={`flex-1 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
-            showPicker ? "bg-orange-500 text-white" : "text-zinc-400 hover:text-zinc-200"
-          }`}
-        >
-          + Import From GitHub
-        </button>
-      </div>
-
-      {/* GitHub Repo Picker */}
-      {showPicker && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
-          <p className="text-xs text-zinc-400 mb-3">
-            Select any GitHub repository to import directly into your showcase.
-          </p>
-
-          {loadingRepos && (
-            <div className="flex items-center gap-3 py-8 justify-center text-zinc-500">
-              <span className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
-              <span className="text-sm">Fetching your GitHub repos…</span>
-            </div>
-          )}
-
-          {repos && (
-            <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
-              {repos.map((repo) => {
-                const added = addedUrls.has(repo.url);
-                return (
-                  <button
-                    type="button"
-                    key={repo.name}
-                    onClick={() => !added && addFromRepo(repo)}
-                    disabled={added}
-                    className={`w-full text-left p-3.5 rounded-xl border transition-all flex items-start justify-between gap-3 ${
-                      added
-                        ? "bg-zinc-950/40 border-zinc-850 opacity-40 cursor-not-allowed"
-                        : "bg-zinc-950 border-zinc-800 hover:border-orange-500/50 hover:bg-zinc-800/60 cursor-pointer"
-                    }`}
-                  >
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-semibold text-zinc-100 truncate">{repo.name}</span>
-                      </div>
-                      {repo.description && <p className="text-xs text-zinc-400 truncate">{repo.description}</p>}
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {repo.language && (
-                        <span className="text-xs text-orange-400 bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-md font-mono">
-                          {repo.language}
-                        </span>
-                      )}
-                      <span className="text-xs font-semibold text-orange-400">
-                        {added ? "Added ✓" : "+ Add"}
-                      </span>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+      {/* Top Banner: Add Project Button & AI Switch */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-zinc-900 border border-zinc-800 rounded-xl">
+        <div>
+          <h3 className="text-sm font-bold text-white">Your Showcase Projects ({data.length})</h3>
+          <p className="text-xs text-zinc-400">Manage existing portfolio projects or post new ones.</p>
         </div>
-      )}
-
-      {/* Projects List */}
-      {!showPicker && (
-        <div className="space-y-3">
-          {data.length === 0 && <Empty label="projects" />}
-          {data.map((item, i) => (
-            <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-              <button
-                type="button"
-                className="w-full px-4 py-4 flex items-center justify-between gap-3 text-left cursor-pointer"
-                onClick={() => setOpen(open === i ? null : i)}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <NumBadge n={i + 1} />
-                  <div>
-                    <span className="text-sm font-semibold text-zinc-200 block truncate">
-                      {(item.title as string) || "New Project"}
-                    </span>
-                    <span className="text-xs text-orange-400/80">
-                      {(item.category as string) || "Full-Stack Web"}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    type="button"
-                    title="Move up"
-                    onClick={(e) => { e.stopPropagation(); move(i, -1); }}
-                    disabled={i === 0}
-                    className="p-1.5 text-zinc-500 hover:text-orange-400 disabled:opacity-20 transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" /></svg>
-                  </button>
-                  <button
-                    type="button"
-                    title="Move down"
-                    onClick={(e) => { e.stopPropagation(); move(i, 1); }}
-                    disabled={i === data.length - 1}
-                    className="p-1.5 text-zinc-500 hover:text-orange-400 disabled:opacity-20 transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                  </button>
-                  <ChevronIcon open={open === i} />
-                </div>
-              </button>
-
-              {open === i && (
-                <div className="px-4 pb-5 border-t border-zinc-800 pt-4 space-y-4">
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <Field label="Project Name" value={item.title as string} onChange={(v) => update(i, "title", v)} placeholder="Creative Cube" />
-                    <div>
-                      <label className={lbl}>Category</label>
-                      <select
-                        value={(item.category as string) || "Full-Stack Web"}
-                        onChange={(e) => update(i, "category", e.target.value)}
-                        className={inp}
-                      >
-                        <option value="Full-Stack Web">Full-Stack Web</option>
-                        <option value="Mobile App">Mobile App</option>
-                        <option value="Enterprise Systems">Enterprise Systems</option>
-                        <option value="CMS & Platforms">CMS & Platforms</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <Field label="One-line Description" value={item.subtitle as string} onChange={(v) => update(i, "subtitle", v)} placeholder="Full-Stack SaaS Platform" />
-                  <Field label="Full Description" value={item.description as string} onChange={(v) => update(i, "description", v)} placeholder="What you built and why..." multiline />
-
-                  {/* Highlights */}
-                  <div>
-                    <label className={lbl}>Key Engineering Highlights (one per line)</label>
-                    <textarea
-                      rows={3}
-                      value={((item.highlights as string[]) || []).join("\n")}
-                      onChange={(e) => update(i, "highlights", e.target.value.split("\n").filter(Boolean))}
-                      placeholder={"• Prisma database schema with automated migrations\n• Real-time offline caching with Hive"}
-                      className={inp + " resize-none"}
-                    />
-                  </div>
-
-                  {/* Image / Media Upload */}
-                  <div>
-                    <label className={lbl}>Project Screenshot / Cover Image</label>
-                    <div className="flex items-center gap-3">
-                      <input
-                        value={(item.image as string) || ""}
-                        onChange={(e) => update(i, "image", e.target.value)}
-                        placeholder="/projects/screenshot.png"
-                        className={inp + " flex-1"}
-                      />
-                      <label className="px-4 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white rounded-lg text-xs font-semibold cursor-pointer border border-zinc-700 shrink-0 flex items-center gap-1.5 transition-colors">
-                        {uploadingIdx === i ? <Spinner /> : <span>📷 Upload Image</span>}
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => handleImageUpload(e, i)}
-                        />
-                      </label>
-                    </div>
-                  </div>
-
-                  <Field label="Technologies (comma-separated)" hint="Next.js, TypeScript, Docker"
-                    value={(item.tech as string[] ?? []).join(", ")} onChange={(v) => update(i, "tech", v.split(",").map((s) => s.trim()).filter(Boolean))} />
-                  <Field label="Filter Tags (comma-separated)" hint="Tags used for filtering"
-                    value={(item.tags as string[] ?? []).join(", ")} onChange={(v) => update(i, "tags", v.split(",").map((s) => s.trim()).filter(Boolean))} />
-                  
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <Field label="GitHub URL" value={item.github as string} onChange={(v) => update(i, "github", v)} />
-                    <Field label="Live URL (optional)" value={(item.live as string) ?? ""} onChange={(v) => update(i, "live", v)} placeholder="https://myproject.com" />
-                  </div>
-
-                  <div className="flex items-center justify-between pt-2">
-                    <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(item.featured)}
-                        onChange={(e) => update(i, "featured", e.target.checked)}
-                        className="rounded border-zinc-700 text-orange-500 focus:ring-0"
-                      />
-                      <span>Mark as Featured Project</span>
-                    </label>
-
-                    <button type="button" onClick={() => remove(i)} className="flex items-center gap-1.5 text-red-400 hover:text-red-300 text-xs cursor-pointer">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                      Remove Project
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-
+        <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={() => {
-              const blank = {
-                title: "New Project",
-                subtitle: "Full-Stack Project",
-                description: "",
-                category: "Full-Stack Web",
-                tech: ["Next.js", "TypeScript"],
-                tags: ["Next.js", "TypeScript"],
-                highlights: [],
-                github: "https://github.com/katosamuelraymond",
-              };
-              onChange([blank, ...data]);
-              setOpen(0);
-            }}
-            className="w-full py-4 border-2 border-dashed border-zinc-700 hover:border-orange-500 rounded-xl text-zinc-400 hover:text-orange-400 transition-all text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
+            onClick={onSwitchToAI}
+            className="px-3.5 py-2 bg-zinc-800 hover:bg-zinc-700 text-orange-400 font-semibold rounded-lg text-xs transition-colors cursor-pointer flex items-center gap-1.5"
           >
-            + Add New Custom Project
+            <span>✨ AI GitHub Publisher</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="px-3.5 py-2 bg-orange-500 hover:bg-orange-400 text-white font-semibold rounded-lg text-xs transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <span>{showAddForm ? "✕ Cancel" : "+ Manual Add"}</span>
           </button>
         </div>
+      </div>
+
+      {/* Manual Add Form */}
+      {showAddForm && (
+        <div className="p-5 bg-zinc-900 border-2 border-orange-500/40 rounded-xl space-y-4 shadow-lg">
+          <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+            <h4 className="text-sm font-bold text-white flex items-center gap-2">
+              <span>🚀</span> Post New Project Manually
+            </h4>
+            <span className="text-[11px] text-zinc-400">Appears immediately on your live website</span>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-zinc-300 block mb-1">Project Title *</label>
+              <input
+                type="text"
+                value={newProject.title}
+                onChange={(e) => setNewProject({ ...newProject, title: e.target.value })}
+                placeholder="e.g. Creative Cube"
+                className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-orange-500"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-zinc-300 block mb-1">Category</label>
+              <select
+                value={newProject.category}
+                onChange={(e) => setNewProject({ ...newProject, category: e.target.value })}
+                className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-orange-500"
+              >
+                <option value="Full-Stack Web">Full-Stack Web</option>
+                <option value="Mobile App">Mobile App</option>
+                <option value="Enterprise Systems">Enterprise Systems</option>
+                <option value="CMS &amp; Platforms">CMS &amp; Platforms</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-zinc-300 block mb-1">One-line Subtitle</label>
+            <input
+              type="text"
+              value={newProject.subtitle}
+              onChange={(e) => setNewProject({ ...newProject, subtitle: e.target.value })}
+              placeholder="e.g. Full-Stack SaaS E-Commerce Platform"
+              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-orange-500"
+            />
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-zinc-300 block mb-1">Full Description</label>
+            <textarea
+              rows={3}
+              value={newProject.description}
+              onChange={(e) => setNewProject({ ...newProject, description: e.target.value })}
+              placeholder="What this system does, who uses it, and how it solves real problems..."
+              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-orange-500 resize-none"
+            />
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-zinc-300 block mb-1">Technologies (comma-separated)</label>
+              <input
+                type="text"
+                value={newProject.tech}
+                onChange={(e) => setNewProject({ ...newProject, tech: e.target.value })}
+                placeholder="Next.js, TypeScript, PostgreSQL, Docker"
+                className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-orange-500"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-zinc-300 block mb-1">Filter Tags</label>
+              <input
+                type="text"
+                value={newProject.tags}
+                onChange={(e) => setNewProject({ ...newProject, tags: e.target.value })}
+                placeholder="Next.js, TypeScript"
+                className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-orange-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-zinc-300 block mb-1">GitHub URL</label>
+              <input
+                type="text"
+                value={newProject.github}
+                onChange={(e) => setNewProject({ ...newProject, github: e.target.value })}
+                className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-orange-500"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-zinc-300 block mb-1">Live URL (optional)</label>
+              <input
+                type="text"
+                value={newProject.live}
+                onChange={(e) => setNewProject({ ...newProject, live: e.target.value })}
+                placeholder="https://myproject.com"
+                className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-orange-500"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-xs font-medium text-zinc-300 block mb-1">Key Highlights (one per line)</label>
+            <textarea
+              rows={2}
+              value={newProject.highlights}
+              onChange={(e) => setNewProject({ ...newProject, highlights: e.target.value })}
+              placeholder={"Server-side rendering with streaming\nPrisma ORM schema migrations"}
+              className="w-full bg-zinc-950 border border-zinc-700 rounded-lg px-3 py-2 text-xs sm:text-sm text-white focus:outline-none focus:border-orange-500 resize-none"
+            />
+          </div>
+
+          <div className="flex items-center justify-between pt-2">
+            <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={newProject.featured}
+                onChange={(e) => setNewProject({ ...newProject, featured: e.target.checked })}
+              />
+              <span>Mark as Featured Flagship</span>
+            </label>
+            <button
+              type="button"
+              onClick={submitNewProject}
+              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs transition-colors cursor-pointer"
+            >
+              ✓ Add Project to List
+            </button>
+          </div>
+        </div>
       )}
+
+      {/* Existing Projects Accordion */}
+      <div className="space-y-2">
+        {data.map((item, idx) => (
+          <div key={idx} className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+            <div
+              onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
+              className="p-4 flex items-center justify-between cursor-pointer hover:bg-zinc-850 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <span className="w-6 h-6 rounded bg-zinc-800 text-zinc-400 flex items-center justify-center text-xs font-bold font-mono">
+                  {idx + 1}
+                </span>
+                <div>
+                  <h4 className="text-sm font-bold text-white">{item.title || "Untitled Project"}</h4>
+                  <span className="text-[11px] text-zinc-400">{item.category || "Full-Stack Web"} • {item.subtitle || ""}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {item.featured && <span className="text-[10px] text-amber-400 font-semibold px-2 py-0.5 rounded bg-amber-400/10">★ Featured</span>}
+                <span className="text-zinc-500 text-xs">{openIndex === idx ? "▲" : "▼"}</span>
+              </div>
+            </div>
+
+            {openIndex === idx && (
+              <div className="p-4 border-t border-zinc-800 bg-zinc-950/60 space-y-3 text-xs">
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-zinc-400 block mb-1">Title</label>
+                    <input
+                      value={item.title || ""}
+                      onChange={(e) => updateProjectField(idx, "title", e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-zinc-400 block mb-1">Category</label>
+                    <select
+                      value={item.category || "Full-Stack Web"}
+                      onChange={(e) => updateProjectField(idx, "category", e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white"
+                    >
+                      <option value="Full-Stack Web">Full-Stack Web</option>
+                      <option value="Mobile App">Mobile App</option>
+                      <option value="Enterprise Systems">Enterprise Systems</option>
+                      <option value="CMS &amp; Platforms">CMS &amp; Platforms</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-zinc-400 block mb-1">Subtitle</label>
+                  <input
+                    value={item.subtitle || ""}
+                    onChange={(e) => updateProjectField(idx, "subtitle", e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-zinc-400 block mb-1">Description</label>
+                  <textarea
+                    rows={2}
+                    value={item.description || ""}
+                    onChange={(e) => updateProjectField(idx, "description", e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white resize-none"
+                  />
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-zinc-400 block mb-1">GitHub URL</label>
+                    <input
+                      value={item.github || ""}
+                      onChange={(e) => updateProjectField(idx, "github", e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-zinc-400 block mb-1">Live URL</label>
+                    <input
+                      value={item.live || ""}
+                      onChange={(e) => updateProjectField(idx, "live", e.target.value)}
+                      className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-zinc-400 block mb-1">Technologies (comma-separated)</label>
+                  <input
+                    value={(item.tech || []).join(", ")}
+                    onChange={(e) => updateProjectField(idx, "tech", e.target.value.split(",").map((s) => s.trim()).filter(Boolean))}
+                    className="w-full bg-zinc-900 border border-zinc-700 rounded-lg p-2 text-white"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
+                  <label className="flex items-center gap-1.5 text-zinc-300 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(item.featured)}
+                      onChange={(e) => updateProjectField(idx, "featured", e.target.checked)}
+                    />
+                    <span>Featured Flagship</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => removeProject(idx)}
+                    className="text-red-400 hover:text-red-300 cursor-pointer"
+                  >
+                    Delete Project
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -922,59 +1269,45 @@ function ProjectsEditor({ data, onChange }: { data: Record<string, unknown>[]; o
 function ResumeUploader() {
   const [status,   setStatus]   = useState<"idle" | "uploading" | "done" | "error">("idle");
   const [message,  setMessage]  = useState("");
-  const [fileName, setFileName] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function upload(file: File) {
-    setStatus("uploading"); setMessage(""); setFileName(file.name);
+    setStatus("uploading");
+    setMessage("");
     const form = new FormData();
     form.append("file", file);
     try {
       const res  = await fetch("/api/admin/upload", { method: "POST", body: form });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error);
-      setStatus("done"); setMessage(json.message);
+      setStatus("done");
+      setMessage(json.message);
     } catch (e: unknown) {
-      setStatus("error"); setMessage(e instanceof Error ? e.message : "Upload failed");
+      setStatus("error");
+      setMessage(e instanceof Error ? e.message : "Upload failed");
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
-        <h3 className="text-sm font-semibold text-zinc-400 uppercase tracking-wide mb-4">Upload CV / Resume</h3>
-        <p className="text-zinc-400 text-sm mb-6">
-          Upload your CV as a PDF file. Once uploaded, the <strong className="text-white">Download CV</strong> button on your portfolio serves this file automatically.
-        </p>
-
-        <input ref={inputRef} type="file" accept=".pdf" className="hidden"
-          onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); }} />
-
-        <button type="button" onClick={() => inputRef.current?.click()} disabled={status === "uploading"}
-          className="w-full py-10 border-2 border-dashed border-zinc-700 hover:border-orange-500 rounded-xl flex flex-col items-center gap-3 transition-colors group disabled:opacity-60 cursor-pointer">
-          <span className="text-4xl">{status === "uploading" ? "⏳" : status === "done" ? "✅" : "📄"}</span>
-          <span className="text-sm font-semibold text-zinc-300 group-hover:text-orange-400 transition-colors">
-            {status === "uploading" ? "Uploading…" : status === "done" ? "Uploaded!" : "Tap to choose PDF file"}
-          </span>
-          {fileName && <span className="text-xs text-zinc-500">{fileName}</span>}
-        </button>
-
-        {message && (
-          <p className={`mt-4 text-sm px-4 py-3 rounded-xl ${status === "done" ? "bg-green-500/10 text-green-400 border border-green-500/20" : "bg-red-500/10 text-red-400 border border-red-500/20"}`}>
-            {status === "done" ? "✓ " : "⚠️ "}{message}
-          </p>
-        )}
-
-        <div className="mt-6 p-4 bg-zinc-800/50 rounded-xl">
-          <p className="text-zinc-400 text-xs">
-            <strong className="text-zinc-300">Current CV:</strong>{" "}
-            <a href="/resume.pdf" target="_blank" className="text-orange-400 hover:underline">
-              /resume.pdf ↗
-            </a>
-          </p>
-          <p className="text-zinc-500 text-xs mt-1">Max file size: 10MB · PDF format</p>
-        </div>
-      </div>
+    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 space-y-4">
+      <h3 className="text-sm font-bold text-white">Upload CV / Resume</h3>
+      <p className="text-xs text-zinc-400">
+        Upload your PDF resume. It will be served to visitors clicking &quot;Download CV&quot;.
+      </p>
+      <input ref={inputRef} type="file" accept=".pdf" className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); }} />
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={status === "uploading"}
+        className="w-full py-8 border-2 border-dashed border-zinc-700 hover:border-orange-500 rounded-xl flex flex-col items-center gap-2 cursor-pointer transition-colors"
+      >
+        <span className="text-2xl">{status === "uploading" ? "⏳" : status === "done" ? "✅" : "📄"}</span>
+        <span className="text-xs font-semibold text-zinc-300">
+          {status === "uploading" ? "Uploading..." : status === "done" ? "Resume Uploaded Successfully!" : "Choose PDF File"}
+        </span>
+      </button>
+      {message && <p className={`text-xs ${status === "done" ? "text-emerald-400" : "text-red-400"}`}>{message}</p>}
     </div>
   );
 }
@@ -987,174 +1320,103 @@ function ProfileEditor({ data, onChange }: { data: any; onChange: (d: any) => vo
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const set = (key: string, val: any) => onChange({ ...data, [key]: val });
   return (
-    <div className="space-y-6">
-      <Card title="Basic Info">
-        <Field label="Display Name" value={data.name} onChange={(v) => set("name", v)} placeholder="Kato Samuel" />
-        <Field label="Job Title" value={data.title} onChange={(v) => set("title", v)} placeholder="Full Stack & Mobile Developer" />
-        <Field label="Location" value={data.location} onChange={(v) => set("location", v)} placeholder="Kampala, Uganda" />
-        <Field label="Email Address" value={data.email} onChange={(v) => set("email", v)} placeholder="your@email.com" />
-        <Field label="GitHub Profile URL" value={data.github} onChange={(v) => set("github", v)} placeholder="https://github.com/username" />
-      </Card>
-      <Card title="Hero — Typewriter Roles">
+    <div className="space-y-4 bg-zinc-900 border border-zinc-800 rounded-xl p-5 text-xs">
+      <h3 className="text-sm font-bold text-white mb-2">Profile &amp; Bio Information</h3>
+      <div className="grid sm:grid-cols-2 gap-3">
         <div>
-          <label className={lbl}>Roles (one per line — types one by one in hero)</label>
-          <textarea rows={5} value={(data.roles as string[]).join("\n")}
-            onChange={(e) => set("roles", e.target.value.split("\n"))}
-            className={inp + " resize-none"} placeholder={"Full Stack Developer\nMobile Developer"} />
+          <label className="text-zinc-400 block mb-1">Full Name</label>
+          <input value={data.name || ""} onChange={(e) => set("name", e.target.value)} className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-white" />
         </div>
-        <Field label="Currently Building (badge in hero)" value={data.currentlyBuilding} onChange={(v) => set("currentlyBuilding", v)} placeholder="a SaaS platform" />
-      </Card>
-      <Card title="About Section — Bio">
-        <Field label="First paragraph" value={data.bio} onChange={(v) => set("bio", v)} multiline />
-        <Field label="Second paragraph" value={data.bio2} onChange={(v) => set("bio2", v)} multiline />
-      </Card>
-      <Card title="Stats (numbers in About section)">
-        {(data.stats as { value: number; suffix: string; label: string }[]).map((stat, i) => (
-          <div key={i} className="grid grid-cols-3 gap-2 bg-zinc-800/50 rounded-xl p-3">
-            <div><label className="text-xs text-zinc-500 block mb-1">Number</label>
-              <input type="number" value={stat.value} className={inp} onChange={(e) => {
-                const s = [...data.stats]; s[i] = { ...s[i], value: Number(e.target.value) }; set("stats", s);
-              }} /></div>
-            <div><label className="text-xs text-zinc-500 block mb-1">Suffix (+, etc)</label>
-              <input value={stat.suffix} className={inp} placeholder="+" onChange={(e) => {
-                const s = [...data.stats]; s[i] = { ...s[i], suffix: e.target.value }; set("stats", s);
-              }} /></div>
-            <div><label className="text-xs text-zinc-500 block mb-1">Label</label>
-              <input value={stat.label} className={inp} placeholder="Projects" onChange={(e) => {
-                const s = [...data.stats]; s[i] = { ...s[i], label: e.target.value }; set("stats", s);
-              }} /></div>
-          </div>
-        ))}
-      </Card>
+        <div>
+          <label className="text-zinc-400 block mb-1">Title</label>
+          <input value={data.title || ""} onChange={(e) => set("title", e.target.value)} className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-white" />
+        </div>
+      </div>
+      <div>
+        <label className="text-zinc-400 block mb-1">Location</label>
+        <input value={data.location || ""} onChange={(e) => set("location", e.target.value)} className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-white" />
+      </div>
+      <div>
+        <label className="text-zinc-400 block mb-1">Bio</label>
+        <textarea rows={3} value={data.bio || ""} onChange={(e) => set("bio", e.target.value)} className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-white resize-none" />
+      </div>
     </div>
   );
 }
 
 /* ──────────────────────────────────────────
-   Generic Array Editor
+   Generic Array Editor (Experience, Testimonials, Services)
 ────────────────────────────────────────── */
-type FD = { key: string; label: string; hint?: string; multiline?: boolean; placeholder?: string };
+type FD = { key: string; label: string; placeholder?: string };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function ArrayEditor({ data, onChange, fields, itemLabel, emptyLabel }: { data: any[]; onChange: (d: any) => void; fields: FD[]; itemLabel: string; emptyLabel: string }) {
-  const [open, setOpen] = useState<number | null>(null);
-
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const update = (i: number, key: string, val: any) => {
-    const arr = [...data]; arr[i] = { ...arr[i], [key]: val }; onChange(arr);
+    const arr = [...data];
+    arr[i] = { ...arr[i], [key]: val };
+    onChange(arr);
   };
   const add = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const blank: any = {};
-    fields.forEach((f) => { blank[f.key] = f.hint?.includes("comma") ? [] : ""; });
-    onChange([...data, blank]); setOpen(data.length);
+    fields.forEach((f) => { blank[f.key] = ""; });
+    onChange([...data, blank]);
   };
-  const remove = (i: number) => { onChange(data.filter((_, idx) => idx !== i)); setOpen(null); };
+  const remove = (i: number) => {
+    onChange(data.filter((_, idx) => idx !== i));
+  };
 
   return (
     <div className="space-y-3">
-      {data.length === 0 && <Empty label={emptyLabel + "s"} />}
       {data.map((item, i) => (
-        <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
-          <button type="button" className="w-full px-4 py-4 flex items-center justify-between gap-3 text-left cursor-pointer"
-            onClick={() => setOpen(open === i ? null : i)}>
-            <div className="flex items-center gap-3 min-w-0">
-              <NumBadge n={i + 1} />
-              <span className="text-sm font-medium text-zinc-200 truncate">{(item[itemLabel] as string) || `New ${emptyLabel}`}</span>
-            </div>
-            <ChevronIcon open={open === i} />
-          </button>
-          {open === i && (
-            <div className="px-4 pb-5 border-t border-zinc-800 pt-4 space-y-4">
-              {fields.map((f) => {
-                const isArr = Array.isArray(item[f.key]) || f.hint?.includes("comma");
-                const val   = isArr ? (item[f.key] as string[] ?? []).join(", ") : (item[f.key] as string) ?? "";
-                return <Field key={f.key} label={f.label} hint={f.hint} placeholder={f.placeholder} value={val} multiline={f.multiline}
-                  onChange={(v) => update(i, f.key, isArr ? v.split(",").map((s) => s.trim()).filter(Boolean) : v)} />;
-              })}
-              <button onClick={() => remove(i)} className="flex items-center gap-2 text-red-400 hover:text-red-300 text-sm cursor-pointer">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                Delete
-              </button>
-            </div>
-          )}
+        <div key={i} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 space-y-3 text-xs">
+          <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
+            <span className="font-bold text-white">#{i + 1} {item[itemLabel] || `New ${emptyLabel}`}</span>
+            <button onClick={() => remove(i)} className="text-red-400 hover:text-red-300 cursor-pointer">Delete</button>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {fields.map((f) => (
+              <div key={f.key}>
+                <label className="text-zinc-400 block mb-1">{f.label}</label>
+                <input
+                  value={item[f.key] || ""}
+                  onChange={(e) => update(i, f.key, e.target.value)}
+                  placeholder={f.placeholder}
+                  className="w-full bg-zinc-950 border border-zinc-700 rounded-lg p-2 text-white"
+                />
+              </div>
+            ))}
+          </div>
         </div>
       ))}
-      <AddBtn label={`Add ${emptyLabel}`} onClick={add} />
+      <button
+        type="button"
+        onClick={add}
+        className="w-full py-3 border border-dashed border-zinc-700 hover:border-zinc-500 rounded-xl text-zinc-400 hover:text-white text-xs font-semibold cursor-pointer transition-colors"
+      >
+        + Add {emptyLabel}
+      </button>
     </div>
   );
-}
-
-/* ──────────────────────────────────────────
-   Shared UI Subcomponents
-────────────────────────────────────────── */
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 sm:p-5">
-      <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-4">{title}</h3>
-      <div className="space-y-4">{children}</div>
-    </div>
-  );
-}
-
-function Field({ label, value, onChange, multiline, hint, placeholder }: { label: string; value: string; onChange: (v: string) => void; multiline?: boolean; hint?: string; placeholder?: string }) {
-  return (
-    <div>
-      <label className={lbl}>{label}</label>
-      {hint && <p className="text-xs text-zinc-500 mb-1.5">{hint}</p>}
-      {multiline
-        ? <textarea rows={3} value={value} onChange={(e) => onChange(e.target.value)} className={inp + " resize-none"} placeholder={placeholder} />
-        : <input value={value} onChange={(e) => onChange(e.target.value)} className={inp} placeholder={placeholder} />
-      }
-    </div>
-  );
-}
-
-function NumBadge({ n }: { n: number }) {
-  return <div className="w-7 h-7 rounded-lg bg-orange-500/10 border border-orange-500/20 flex items-center justify-center text-orange-400 font-bold text-xs shrink-0">{n}</div>;
-}
-
-function ChevronIcon({ open }: { open: boolean }) {
-  return <svg className={`w-4 h-4 text-zinc-500 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>;
-}
-
-function AddBtn({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button type="button" onClick={onClick} className="w-full py-4 border-2 border-dashed border-zinc-700 hover:border-orange-500 rounded-xl text-zinc-400 hover:text-orange-400 transition-all text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer">
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-      {label}
-    </button>
-  );
-}
-
-function Empty({ label }: { label: string }) {
-  return <div className="text-center py-10 text-zinc-500"><p className="text-3xl mb-2">📭</p><p className="text-sm">No {label} yet. Add one below.</p></div>;
-}
-
-function Spinner() {
-  return <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block shrink-0" />;
 }
 
 const experienceFields: FD[] = [
-  { key: "role",        label: "Job Title",              placeholder: "Full Stack Developer" },
-  { key: "company",     label: "Company",                placeholder: "Freelance" },
-  { key: "period",      label: "Period",                 placeholder: "2023 — Present" },
-  { key: "description", label: "What you did",           placeholder: "Describe your work...", multiline: true },
-  { key: "tags",        label: "Tech Tags (comma-separated)", hint: "comma-separated list", placeholder: "Laravel, Docker" },
-];
-const testimonialFields: FD[] = [
-  { key: "name",     label: "Client Name",           placeholder: "John Doe" },
-  { key: "role",     label: "Their Job Title",       placeholder: "CEO" },
-  { key: "company",  label: "Their Company",         placeholder: "Tech Company Ltd" },
-  { key: "quote",    label: "Their Quote",           placeholder: "Samuel delivered amazing work...", multiline: true },
-  { key: "initials", label: "Initials (2 letters)",  placeholder: "JD" },
-];
-const serviceFields: FD[] = [
-  { key: "icon",        label: "Emoji",          placeholder: "🌐" },
-  { key: "title",       label: "Service Name",   placeholder: "Web Development" },
-  { key: "description", label: "Description",    placeholder: "What this covers...", multiline: true },
-  { key: "features",    label: "Key Features (comma-separated)", hint: "comma-separated list", placeholder: "Next.js, Laravel, Docker" },
+  { key: "role", label: "Job Title", placeholder: "Full Stack Developer" },
+  { key: "company", label: "Company", placeholder: "Freelance" },
+  { key: "period", label: "Period", placeholder: "2023 — Present" },
+  { key: "description", label: "Description", placeholder: "What you did..." },
 ];
 
-const lbl = "block text-xs font-semibold uppercase tracking-wider text-zinc-300 mb-1.5";
-const inp = "w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2.5 text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-orange-500 transition-colors text-sm";
+const testimonialFields: FD[] = [
+  { key: "name", label: "Client Name", placeholder: "John Doe" },
+  { key: "role", label: "Job Title", placeholder: "CEO" },
+  { key: "company", label: "Company", placeholder: "Company Ltd" },
+  { key: "quote", label: "Quote", placeholder: "Testimonial..." },
+];
+
+const serviceFields: FD[] = [
+  { key: "title", label: "Service Name", placeholder: "Web Development" },
+  { key: "icon", label: "Icon / Emoji", placeholder: "🌐" },
+  { key: "description", label: "Description", placeholder: "Service overview..." },
+];
